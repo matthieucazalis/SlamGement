@@ -1,0 +1,109 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum AdrStatus {
+  PROPOSED
+  ACCEPTED
+  REJECTED
+  DEPRECATED
+  SUPERSEDED
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime     @default(now())
+  memberships  Membership[]
+  adrs         Adr[]
+  auditLogs    AuditLog[]
+}
+
+model Project {
+  id          String       @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime     @default(now())
+  memberships Membership[]
+  invitations Invitation[]
+  adrs        Adr[]
+  auditLogs   AuditLog[]
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  userId    String
+  projectId String
+  role      Role     @default(MEMBER)
+  joinedAt  DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+}
+
+model Invitation {
+  id         String    @id @default(cuid())
+  projectId  String
+  email      String
+  role       Role      @default(MEMBER)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Adr {
+  id             String    @id @default(cuid())
+  projectId      String
+  number         Int
+  title          String
+  context        String
+  decision       String
+  consequences   String
+  alternatives   String?
+  mermaidCode    String?
+  status         AdrStatus @default(PROPOSED)
+  authorId       String
+  supersededById String?   @unique
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author         User      @relation(fields: [authorId], references: [id])
+  supersededBy   Adr?      @relation("Supersession", fields: [supersededById], references: [id])
+  supersedes     Adr?      @relation("Supersession")
+
+  @@unique([projectId, number])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  projectId  String?
+  userId     String
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  project    Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@index([projectId, createdAt])
+}
