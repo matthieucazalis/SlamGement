@@ -27,3 +27,31 @@ export async function verifyCredentials(email: string, password: string) {
   if (!ok) return null;
   return { id: user.id, email: user.email, name: user.name };
 }
+
+export class WrongPasswordError extends Error {}
+
+export async function getUserById(id: string) {
+  return prisma.user.findUnique({
+    where: { id },
+    select: { id: true, name: true, email: true, createdAt: true },
+  });
+}
+
+export async function updateProfile(userId: string, name: string) {
+  return prisma.user.update({ where: { id: userId }, data: { name } });
+}
+
+export async function changePassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string,
+) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new WrongPasswordError();
+
+  const ok = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!ok) throw new WrongPasswordError();
+
+  const passwordHash = await bcrypt.hash(newPassword, 12);
+  await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+}

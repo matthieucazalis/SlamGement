@@ -1,5 +1,6 @@
 import { auth, signOut } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default async function ProjectsPage() {
   const session = await auth();
@@ -14,6 +15,9 @@ export default async function ProjectsPage() {
           await signOut({ redirectTo: "/login" });
         }}
       >
+        <Link href="/profile" className="underline">
+          Mon profil
+        </Link>
         <Button type="submit" variant="outline">
           Se déconnecter
         </Button>
