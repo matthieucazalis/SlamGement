@@ -12,6 +12,7 @@ export class AdrNotFoundError extends Error {}
 export class AdrLockedError extends Error {}
 export class InvalidTransitionError extends Error {}
 export class InvalidSupersessionError extends Error {}
+export class AdrInUseError extends Error {}
 
 const isUniqueViolation = (e: unknown) =>
   typeof e === "object" &&
@@ -209,6 +210,11 @@ export async function deleteAdr(
       where: { projectId_number: { projectId, number } },
     });
     if (!adr) throw new AdrNotFoundError();
+
+    const replaces = await tx.adr.findFirst({
+      where: { supersededById: adr.id },
+    });
+    if (replaces) throw new AdrInUseError();
 
     await logAction(
       {

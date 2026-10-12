@@ -7,12 +7,12 @@ import {
   isContentEditable,
   type AdrStatusValue,
 } from "@/lib/adr-status";
-import { ForbiddenError } from "@/lib/permissions";
+import { ForbiddenError, requireRole } from "@/lib/permissions";
 import { requireUser } from "@/lib/session";
 import { AdrNotFoundError, getAdr } from "@/services/adr.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { changeStatusAction } from "../actions";
+import { changeStatusAction, deleteAdrAction } from "../actions";
 
 const ACTION_LABELS: Record<AdrStatusValue, string> = {
   PROPOSED: "Remettre en proposition",
@@ -29,6 +29,8 @@ const ERRORS: Record<string, string> = {
   forbidden: "Action non autorisée.",
   invalid: "Données invalides.",
   locked: "Cet ADR n'est plus modifiable.",
+  "in-use":
+    "Impossible : cet ADR en remplace un autre. Supprime ou modifie d'abord la chaîne de remplacement.",
 };
 
 function Section({ title, text }: { title: string; text: string }) {
@@ -55,8 +57,10 @@ export default async function AdrDetailPage({
   const user = await requireUser();
 
   let adr;
+  let membership;
   try {
     adr = await getAdr(user.id, id, number);
+    membership = await requireRole(user.id, id);
   } catch (e) {
     if (e instanceof ForbiddenError || e instanceof AdrNotFoundError)
       notFound();
@@ -178,6 +182,24 @@ export default async function AdrDetailPage({
           <pre className="overflow-x-auto rounded-md border p-3 text-sm">
             {adr.mermaidCode}
           </pre>
+        </section>
+      )}
+
+      {membership.role === "ADMIN" && (
+        <section className="space-y-3 rounded-lg border border-red-300 p-4">
+          <h2 className="font-semibold text-red-600">Zone dangereuse</h2>
+          <form
+            action={deleteAdrAction.bind(null, id, adr.number)}
+            className="space-y-3"
+          >
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="confirm" required />
+              Je confirme vouloir supprimer définitivement cet ADR
+            </label>
+            <Button type="submit" variant="destructive" size="sm">
+              Supprimer l'ADR
+            </Button>
+          </form>
         </section>
       )}
     </main>

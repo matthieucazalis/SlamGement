@@ -8,12 +8,14 @@ import { ForbiddenError } from "@/lib/permissions";
 import { requireUser } from "@/lib/session";
 import { adrSchema } from "@/lib/validators/adr";
 import {
+  AdrInUseError,
   AdrLockedError,
   AdrNotFoundError,
   InvalidSupersessionError,
   InvalidTransitionError,
   changeAdrStatus,
   createAdr,
+  deleteAdr,
   updateAdr,
 } from "@/services/adr.service";
 
@@ -110,4 +112,27 @@ export async function changeStatusAction(
 
   revalidatePath(base);
   redirect(base);
+}
+
+export async function deleteAdrAction(
+  projectId: string,
+  number: number,
+  formData: FormData,
+) {
+  const user = await requireUser();
+  const base = `/projects/${projectId}/adr/${number}`;
+
+  if (formData.get("confirm") !== "on") redirect(`${base}?error=invalid`);
+
+  try {
+    await deleteAdr(user.id, projectId, number);
+  } catch (e) {
+    if (e instanceof AdrInUseError) redirect(`${base}?error=in-use`);
+    if (e instanceof ForbiddenError || e instanceof AdrNotFoundError)
+      redirect(`${base}?error=forbidden`);
+    throw e;
+  }
+
+  revalidatePath(`/projects/${projectId}/adr`);
+  redirect(`/projects/${projectId}/adr`);
 }
