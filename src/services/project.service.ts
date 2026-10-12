@@ -46,3 +46,37 @@ export async function getProjectForUser(userId: string, projectId: string) {
   });
   return { project, role: membership.role };
 }
+
+export class ConfirmationMismatchError extends Error {}
+
+export async function deleteProject(
+  actorId: string,
+  projectId: string,
+  confirmName: string,
+) {
+  await requireRole(actorId, projectId, "ADMIN");
+
+  await prisma.$transaction(async (tx) => {
+    const project = await tx.project.findUniqueOrThrow({
+      where: { id: projectId },
+    });
+
+    if (confirmName.trim() !== project.name) {
+      throw new ConfirmationMismatchError();
+    }
+
+    await logAction(
+      {
+        userId: actorId,
+        projectId: null,
+        action: AUDIT_ACTIONS.PROJECT_DELETED,
+        entityType: "Project",
+        entityId: project.id,
+        metadata: { name: project.name },
+      },
+      tx,
+    );
+
+    await tx.project.delete({ where: { id: projectId } });
+  });
+}
