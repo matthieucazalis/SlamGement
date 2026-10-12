@@ -25,6 +25,9 @@ export default async function ProjectPage({
       <Link href="/projects" className="text-sm underline">
         ← Mes projets
       </Link>
+      <Link href={`/projects/${id}/members`} className="underline">
+        Membres
+      </Link>
       <h1 className="text-2xl font-bold">{data.project.name}</h1>
       {data.project.description && <p>{data.project.description}</p>}
       <p className="text-sm">Ton rôle : {data.role}</p>
