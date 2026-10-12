@@ -48,12 +48,20 @@ export default async function AdrListPage({
 
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Décisions d'architecture</h1>
-        <Link
-          href={`/projects/${id}/adr/new`}
-          className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
-        >
-          Nouvel ADR
-        </Link>
+        <div className="flex items-center gap-2">
+          <a
+            href={`/projects/${id}/adr/export`}
+            className="rounded-md border px-3 py-2 text-sm"
+          >
+            Tout exporter (ZIP)
+          </a>
+          <Link
+            href={`/projects/${id}/adr/new`}
+            className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
+          >
+            Nouvel ADR
+          </Link>
+        </div>
       </div>
 
       <nav className="flex flex-wrap gap-2" aria-label="Filtrer par statut">

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdrStatusBadge } from "@/components/adr-status-badge";
+import { Markdown } from "@/components/markdown";
+import { MermaidDiagram } from "@/components/mermaid-diagram";
 import { formatAdrNumber, parseAdrNumber } from "@/lib/adr-format";
 import {
   allowedTransitions,
@@ -37,7 +39,7 @@ function Section({ title, text }: { title: string; text: string }) {
   return (
     <section className="space-y-2">
       <h2 className="text-lg font-semibold">{title}</h2>
-      <p className="whitespace-pre-wrap">{text}</p>
+      <Markdown>{text}</Markdown>
     </section>
   );
 }
@@ -121,6 +123,8 @@ export default async function AdrDetailPage({
       )}
 
       <div className="flex flex-wrap items-end gap-3">
+        {/* Les boutons n'apparaissent que si la transition est autorisée,
+            mais la vérification reste côté serveur (adr.service). */}
         {transitions
           .filter((s) => s !== "SUPERSEDED")
           .map((s) => (
@@ -168,6 +172,13 @@ export default async function AdrDetailPage({
             Modifier
           </Link>
         )}
+
+        <a
+          href={`/projects/${id}/adr/${adr.number}/export`}
+          className="rounded-md border px-3 py-1.5 text-sm"
+        >
+          Exporter .md
+        </a>
       </div>
 
       <Section title="Contexte" text={adr.context} />
@@ -176,12 +187,17 @@ export default async function AdrDetailPage({
       {adr.alternatives && (
         <Section title="Alternatives" text={adr.alternatives} />
       )}
+
       {adr.mermaidCode && (
         <section className="space-y-2">
-          <h2 className="text-lg font-semibold">Schéma (code Mermaid)</h2>
-          <pre className="overflow-x-auto rounded-md border p-3 text-sm">
-            {adr.mermaidCode}
-          </pre>
+          <h2 className="text-lg font-semibold">Schéma</h2>
+          <MermaidDiagram code={adr.mermaidCode} />
+          <details className="text-sm">
+            <summary className="cursor-pointer">Voir le code Mermaid</summary>
+            <pre className="mt-2 overflow-x-auto rounded-md border p-3">
+              {adr.mermaidCode}
+            </pre>
+          </details>
         </section>
       )}
 

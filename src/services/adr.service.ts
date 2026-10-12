@@ -230,3 +230,16 @@ export async function deleteAdr(
     await tx.adr.delete({ where: { id: adr.id } });
   });
 }
+
+export async function listAdrsForExport(userId: string, projectId: string) {
+  await requireRole(userId, projectId);
+  return prisma.adr.findMany({
+    where: { projectId },
+    include: {
+      author: { select: { name: true } },
+      supersededBy: { select: { number: true, title: true } },
+      supersedes: { select: { number: true, title: true } },
+    },
+    orderBy: { number: "asc" },
+  });
+}
