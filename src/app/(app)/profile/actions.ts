@@ -21,7 +21,7 @@ export async function updateProfileAction(
 
   await updateProfile(user.id, parsed.data.name);
   revalidatePath("/profile");
-  return { success: "Profil mis à jour." };
+  return { success: "Profil mis à jour!" };
 }
 
 export async function changePasswordAction(
@@ -40,8 +40,8 @@ export async function changePasswordAction(
     );
   } catch (e) {
     if (e instanceof WrongPasswordError)
-      return { error: "Mot de passe actuel incorrect." };
+      return { error: "Mot de passe actuel incorrect!" };
     throw e;
   }
-  return { success: "Mot de passe modifié." };
+  return { success: "Mot de passe modifié!" };
 }
