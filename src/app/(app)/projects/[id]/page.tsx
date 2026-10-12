@@ -50,6 +50,9 @@ export default async function ProjectPage({
         <Link href={`/projects/${id}/members`} className="underline">
           Membres
         </Link>
+        <Link href={`/projects/${id}/adr`} className="underline">
+          Décisions (ADR)
+        </Link>
       </nav>
 
       {error && ERRORS[error] && (
