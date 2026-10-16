@@ -1,5 +1,6 @@
 import { formatAdrNumber } from "@/lib/adr-format";
 import { STATUS_LABELS, type AdrStatusValue } from "@/lib/adr-status";
+import { TASK_STATUS_LABELS, type TaskStatusValue } from "@/lib/task-status";
 
 export const AUDIT_ACTION_LABELS: Record<string, string> = {
   PROJECT_CREATED: "Projet créé",
@@ -12,6 +13,10 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   ADR_UPDATED: "ADR modifié",
   ADR_STATUS_CHANGED: "Statut d'ADR modifié",
   ADR_DELETED: "ADR supprimé",
+  TASK_CREATED: "Tâche créée",
+  TASK_UPDATED: "Tâche modifiée",
+  TASK_MOVED: "Tâche déplacée",
+  TASK_DELETED: "Tâche supprimée",
 };
 
 const FIELD_LABELS: Record<string, string> = {
@@ -33,9 +38,12 @@ const adrRef = (m: Meta) =>
 const quoted = (v: unknown) => (str(v) ? ` « ${str(v)} »` : "");
 const statusLabel = (v: unknown) =>
   STATUS_LABELS[v as AdrStatusValue] ?? String(v);
+const taskStatusLabel = (v: unknown) =>
+  TASK_STATUS_LABELS[v as TaskStatusValue] ?? String(v);
 const roleLabel = (v: unknown) =>
   v === "ADMIN" ? "administrateur" : v === "MEMBER" ? "membre" : "?";
 
+// Les métadonnées sont du JSON libre : on ne suppose jamais leur forme.
 export function describeAudit(action: string, metadata: unknown): string {
   const m = asMeta(metadata);
 
@@ -71,6 +79,14 @@ export function describeAudit(action: string, metadata: unknown): string {
     }
     case "ADR_DELETED":
       return `a supprimé ${adrRef(m)}${quoted(m.title)}`;
+    case "TASK_CREATED":
+      return `a créé la tâche${quoted(m.title)}`;
+    case "TASK_UPDATED":
+      return `a modifié la tâche${quoted(m.title)}`;
+    case "TASK_MOVED":
+      return `a déplacé la tâche${quoted(m.title)} de ${taskStatusLabel(m.from)} à ${taskStatusLabel(m.to)}`;
+    case "TASK_DELETED":
+      return `a supprimé la tâche${quoted(m.title)}`;
     default:
       return action;
   }

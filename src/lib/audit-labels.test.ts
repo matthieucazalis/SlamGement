@@ -34,6 +34,25 @@ describe("describeAudit", () => {
     ).toBe("a modifié ADR-0001 (titre, schéma)");
   });
 
+  it("décrit le déplacement d'une tâche", () => {
+    expect(
+      describeAudit("TASK_MOVED", {
+        title: "Écrire le MCD",
+        from: "TODO",
+        to: "IN_PROGRESS",
+      }),
+    ).toBe("a déplacé la tâche « Écrire le MCD » de À faire à En cours");
+  });
+
+  it("décrit la création et la suppression d'une tâche", () => {
+    expect(describeAudit("TASK_CREATED", { title: "Écrire le MCD" })).toBe(
+      "a créé la tâche « Écrire le MCD »",
+    );
+    expect(describeAudit("TASK_DELETED", { title: "Écrire le MCD" })).toBe(
+      "a supprimé la tâche « Écrire le MCD »",
+    );
+  });
+
   it("ne plante pas si les métadonnées sont absentes ou invalides", () => {
     expect(describeAudit("ADR_CREATED", null)).toBe("a créé un ADR");
     expect(describeAudit("ADR_CREATED", "n'importe quoi")).toBe(
