@@ -46,13 +46,21 @@ export default async function ProjectPage({
         <p className="text-sm">Ton rôle : {data.role}</p>
       </div>
 
-      <nav className="flex gap-4 text-sm">
-        <Link href={`/projects/${id}/members`} className="underline">
-          Membres
+      <nav className="flex flex-wrap gap-4 text-sm">
+        <Link href={`/projects/${id}/dashboard`} className="underline">
+          Tableau de bord
         </Link>
         <Link href={`/projects/${id}/adr`} className="underline">
           Décisions (ADR)
         </Link>
+        <Link href={`/projects/${id}/members`} className="underline">
+          Membres
+        </Link>
+        {isAdmin && (
+          <Link href={`/projects/${id}/history`} className="underline">
+            Historique
+          </Link>
+        )}
       </nav>
 
       {error && ERRORS[error] && (
