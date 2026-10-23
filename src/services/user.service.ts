@@ -20,11 +20,12 @@ export async function registerUser(input: {
   });
 }
 
+const DUMMY_HASH = bcrypt.hashSync("mot-de-passe-factice", 12);
+
 export async function verifyCredentials(email: string, password: string) {
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) return null;
-  const ok = await bcrypt.compare(password, user.passwordHash);
-  if (!ok) return null;
+  const ok = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
+  if (!user || !ok) return null;
   return { id: user.id, email: user.email, name: user.name };
 }
 
