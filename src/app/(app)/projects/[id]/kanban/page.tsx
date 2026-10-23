@@ -8,6 +8,7 @@ import {
   TASK_STATUS_LABELS,
   type TaskStatusValue,
 } from "@/lib/task-status";
+import { listAdrs } from "@/services/adr.service";
 import { listMembers } from "@/services/member.service";
 import { getProjectForUser } from "@/services/project.service";
 import { listTasks } from "@/services/task.service";
@@ -23,6 +24,8 @@ const ERRORS: Record<string, string> = {
   invalid: "Données invalides.",
 };
 
+// Les paramètres d'URL sont de l'entrée utilisateur : une valeur
+// invalide est simplement ignorée.
 const querySchema = z.object({
   assignee: z.string().max(40).optional().catch(undefined),
   status: z.enum(TASK_STATUSES).optional().catch(undefined),
@@ -44,10 +47,12 @@ export default async function KanbanPage({
 
   let project;
   let members;
+  let adrs;
   let tasks: TaskList;
   try {
     ({ project } = await getProjectForUser(user.id, id));
     members = await listMembers(user.id, id);
+    adrs = await listAdrs(user.id, id);
     tasks = await listTasks(user.id, id, { assigneeId: q.assignee });
   } catch (e) {
     if (e instanceof ForbiddenError) notFound();
@@ -63,6 +68,11 @@ export default async function KanbanPage({
   const memberOptions = members.map((m) => ({
     id: m.userId,
     name: m.user.name,
+  }));
+  const adrOptions = adrs.map((a) => ({
+    id: a.id,
+    number: a.number,
+    title: a.title,
   }));
 
   return (
@@ -89,6 +99,7 @@ export default async function KanbanPage({
           <TaskForm
             action={createTaskAction.bind(null, id)}
             members={memberOptions}
+            adrs={adrOptions}
             submitLabel="Ajouter la tâche"
           />
         </div>

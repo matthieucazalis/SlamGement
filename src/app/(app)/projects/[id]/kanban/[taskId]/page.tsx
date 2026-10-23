@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ForbiddenError } from "@/lib/permissions";
 import { requireUser } from "@/lib/session";
+import { listAdrs } from "@/services/adr.service";
 import { listMembers } from "@/services/member.service";
 import { TaskNotFoundError, getTask } from "@/services/task.service";
 import { Button } from "@/components/ui/button";
@@ -18,9 +19,11 @@ export default async function EditTaskPage({
 
   let task;
   let members;
+  let adrs;
   try {
     task = await getTask(user.id, id, taskId);
     members = await listMembers(user.id, id);
+    adrs = await listAdrs(user.id, id);
   } catch (e) {
     if (e instanceof ForbiddenError || e instanceof TaskNotFoundError)
       notFound();
@@ -37,11 +40,13 @@ export default async function EditTaskPage({
       <TaskForm
         action={updateTaskAction.bind(null, id, task.id)}
         members={members.map((m) => ({ id: m.userId, name: m.user.name }))}
+        adrs={adrs.map((a) => ({ id: a.id, number: a.number, title: a.title }))}
         initial={{
           title: task.title,
           description: task.description ?? "",
           dueDate: task.dueDate ? task.dueDate.toISOString().slice(0, 10) : "",
           assigneeId: task.assigneeId ?? "",
+          adrId: task.adrId ?? "",
         }}
         submitLabel="Enregistrer"
       />

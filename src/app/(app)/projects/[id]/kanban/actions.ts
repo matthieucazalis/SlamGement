@@ -8,6 +8,7 @@ import { requireUser } from "@/lib/session";
 import { TASK_STATUSES } from "@/lib/task-status";
 import { taskSchema } from "@/lib/validators/task";
 import {
+  InvalidAdrError,
   InvalidAssigneeError,
   TaskNotFoundError,
   createTask,
@@ -25,6 +26,8 @@ function serviceError(e: unknown): string | null {
   if (e instanceof InvalidAssigneeError)
     return "Cette personne n'est pas membre du projet.";
   if (e instanceof TaskNotFoundError) return "Tâche introuvable.";
+  if (e instanceof InvalidAdrError)
+    return "Cet ADR n'existe pas dans ce projet.";
   return null;
 }
 

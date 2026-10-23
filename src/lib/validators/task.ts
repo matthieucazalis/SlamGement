@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+const optionalId = z
+  .string()
+  .trim()
+  .max(40)
+  .optional()
+  .transform((v) => (v ? v : undefined));
+
 export const taskSchema = z.object({
   title: z.string().trim().min(2, "2 caractères minimum").max(120),
   description: z
@@ -20,12 +27,8 @@ export const taskSchema = z.object({
     .refine((d) => d === undefined || !Number.isNaN(d.getTime()), {
       message: "Date invalide",
     }),
-  assigneeId: z
-    .string()
-    .trim()
-    .max(40)
-    .optional()
-    .transform((v) => (v ? v : undefined)),
+  assigneeId: optionalId,
+  adrId: optionalId,
 });
 
 export type TaskInput = z.infer<typeof taskSchema>;

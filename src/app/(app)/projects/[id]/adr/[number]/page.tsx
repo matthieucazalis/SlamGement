@@ -11,7 +11,9 @@ import {
 } from "@/lib/adr-status";
 import { ForbiddenError, requireRole } from "@/lib/permissions";
 import { requireUser } from "@/lib/session";
+import { TASK_STATUS_LABELS } from "@/lib/task-status";
 import { AdrNotFoundError, getAdr } from "@/services/adr.service";
+import { listTasksByAdr } from "@/services/task.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { changeStatusAction, deleteAdrAction } from "../actions";
@@ -60,9 +62,11 @@ export default async function AdrDetailPage({
 
   let adr;
   let membership;
+  let tasks;
   try {
     adr = await getAdr(user.id, id, number);
     membership = await requireRole(user.id, id);
+    tasks = await listTasksByAdr(user.id, id, adr.id);
   } catch (e) {
     if (e instanceof ForbiddenError || e instanceof AdrNotFoundError)
       notFound();
@@ -200,6 +204,35 @@ export default async function AdrDetailPage({
           </details>
         </section>
       )}
+
+      <section className="space-y-2">
+        <h2 className="text-lg font-semibold">Tâches liées</h2>
+        {tasks.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Aucune tâche liée. Associe une tâche à cet ADR depuis le Kanban.
+          </p>
+        ) : (
+          <ul className="divide-y rounded-lg border">
+            {tasks.map((t) => (
+              <li
+                key={t.id}
+                className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm"
+              >
+                <Link
+                  href={`/projects/${id}/kanban/${t.id}`}
+                  className="underline"
+                >
+                  {t.title}
+                </Link>
+                <span className="text-xs text-muted-foreground">
+                  {TASK_STATUS_LABELS[t.status]} ·{" "}
+                  {t.assignee?.name ?? "Non assignée"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       {membership.role === "ADMIN" && (
         <section className="space-y-3 rounded-lg border border-red-300 p-4">

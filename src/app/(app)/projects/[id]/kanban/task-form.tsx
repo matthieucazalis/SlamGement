@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { formatAdrNumber } from "@/lib/adr-format";
 import type { TaskFormState } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ type Initial = {
   description?: string;
   dueDate?: string;
   assigneeId?: string;
+  adrId?: string;
 };
 
 const FIELD_CLASS = "w-full rounded-md border bg-transparent px-3 py-2 text-sm";
@@ -18,15 +20,19 @@ const FIELD_CLASS = "w-full rounded-md border bg-transparent px-3 py-2 text-sm";
 export function TaskForm({
   action,
   members,
+  adrs,
   initial = {},
   submitLabel,
 }: {
   action: (state: TaskFormState, formData: FormData) => Promise<TaskFormState>;
   members: { id: string; name: string }[];
+  adrs: { id: string; number: number; title: string }[];
   initial?: Initial;
   submitLabel: string;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
+  // Après une erreur, on réaffiche la saisie. La clé force le formulaire à
+  // repartir des bonnes valeurs (React vide sinon les champs après l'envoi).
   const v: Initial = state?.values ?? initial;
 
   return (
@@ -72,6 +78,23 @@ export function TaskForm({
             ))}
           </select>
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="adrId">Décision liée (ADR, facultatif)</Label>
+        <select
+          id="adrId"
+          name="adrId"
+          defaultValue={v.adrId ?? ""}
+          className={`${FIELD_CLASS} h-9 py-0`}
+        >
+          <option value="">Aucune</option>
+          {adrs.map((a) => (
+            <option key={a.id} value={a.id}>
+              ADR-{formatAdrNumber(a.number)} : {a.title}
+            </option>
+          ))}
+        </select>
       </div>
 
       {state?.error && (

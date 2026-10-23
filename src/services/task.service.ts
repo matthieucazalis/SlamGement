@@ -7,6 +7,7 @@ import { AUDIT_ACTIONS, logAction } from "@/services/audit.service";
 
 export class TaskNotFoundError extends Error {}
 export class InvalidAssigneeError extends Error {}
+export class InvalidAdrError extends Error {}
 
 async function assertAssignee(
   tx: Prisma.TransactionClient,
@@ -18,6 +19,19 @@ async function assertAssignee(
     where: { userId_projectId: { userId: assigneeId, projectId } },
   });
   if (!membership) throw new InvalidAssigneeError();
+}
+
+async function assertAdr(
+  tx: Prisma.TransactionClient,
+  projectId: string,
+  adrId?: string | null,
+) {
+  if (!adrId) return;
+  const adr = await tx.adr.findFirst({
+    where: { id: adrId, projectId },
+    select: { id: true },
+  });
+  if (!adr) throw new InvalidAdrError();
 }
 
 async function nextPosition(
@@ -33,7 +47,7 @@ async function nextPosition(
 }
 
 export type TaskFilters = {
-  assigneeId?: string;
+  assigneeId?: string; // identifiant d'un membre, ou "none" pour les non assignées
 };
 
 export async function listTasks(
@@ -60,6 +74,19 @@ export async function listTasks(
   });
 }
 
+export async function listTasksByAdr(
+  userId: string,
+  projectId: string,
+  adrId: string,
+) {
+  await requireRole(userId, projectId);
+  return prisma.task.findMany({
+    where: { projectId, adrId },
+    include: { assignee: { select: { name: true } } },
+    orderBy: [{ status: "asc" }, { position: "asc" }],
+  });
+}
+
 export async function getTask(
   userId: string,
   projectId: string,
@@ -82,6 +109,7 @@ export async function createTask(
 
   return prisma.$transaction(async (tx) => {
     await assertAssignee(tx, projectId, input.assigneeId);
+    await assertAdr(tx, projectId, input.adrId);
 
     const task = await tx.task.create({
       data: {
@@ -90,6 +118,7 @@ export async function createTask(
         description: input.description,
         dueDate: input.dueDate,
         assigneeId: input.assigneeId,
+        adrId: input.adrId,
         position: await nextPosition(tx, projectId, "TODO"),
       },
     });
@@ -122,6 +151,7 @@ export async function updateTask(
     if (!task) throw new TaskNotFoundError();
 
     await assertAssignee(tx, projectId, input.assigneeId);
+    await assertAdr(tx, projectId, input.adrId);
 
     const changed: string[] = [];
     if (input.title !== task.title) changed.push("title");
@@ -133,6 +163,7 @@ export async function updateTask(
       changed.push("dueDate");
     if ((input.assigneeId ?? null) !== task.assigneeId)
       changed.push("assignee");
+    if ((input.adrId ?? null) !== task.adrId) changed.push("adr");
 
     const updated = await tx.task.update({
       where: { id: task.id },
@@ -141,6 +172,7 @@ export async function updateTask(
         description: input.description ?? null,
         dueDate: input.dueDate ?? null,
         assigneeId: input.assigneeId ?? null,
+        adrId: input.adrId ?? null,
       },
     });
 
@@ -170,7 +202,7 @@ export async function moveTask(
   return prisma.$transaction(async (tx) => {
     const task = await tx.task.findFirst({ where: { id: taskId, projectId } });
     if (!task) throw new TaskNotFoundError();
-    if (task.status === newStatus) return task;
+    if (task.status === newStatus) return task; // rien à faire, rien à tracer
 
     // la carte arrive en bas de la colonne d'arrivée
     const updated = await tx.task.update({
