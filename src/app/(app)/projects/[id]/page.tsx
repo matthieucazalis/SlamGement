@@ -53,6 +53,9 @@ export default async function ProjectPage({
         <Link href={`/projects/${id}/adr`} className="underline">
           Décisions (ADR)
         </Link>
+        <Link href={`/projects/${id}/kanban`} className="underline">
+          Kanban
+        </Link>
         <Link href={`/projects/${id}/members`} className="underline">
           Membres
         </Link>
