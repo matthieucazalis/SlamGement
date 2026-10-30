@@ -43,6 +43,6 @@ export async function loginAction(
     await signIn("credentials", { ...parsed.data, redirectTo: "/projects" });
   } catch (e) {
     if (e instanceof AuthError) return { error: "Identifiants invalides." };
-    throw e; // une connexion réussie passe par une redirection : ne pas l'avaler
+    throw e;
   }
 }
