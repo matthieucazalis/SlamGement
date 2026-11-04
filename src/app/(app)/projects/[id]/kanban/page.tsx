@@ -76,7 +76,7 @@ export default async function KanbanPage({
   }));
 
   return (
-    <main className="mx-auto max-w-7xl space-y-6 p-8">
+    <main className="mx-auto max-w-7xl space-y-6 p-4 sm:p-8">
       <Link href={`/projects/${id}`} className="text-sm underline">
         ← {project.name}
       </Link>

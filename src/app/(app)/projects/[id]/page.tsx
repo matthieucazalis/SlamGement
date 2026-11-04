@@ -35,7 +35,7 @@ export default async function ProjectPage({
   const isAdmin = data.role === "ADMIN";
 
   return (
-    <main className="mx-auto max-w-2xl space-y-6 p-8">
+    <main className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8">
       <Link href="/projects" className="text-sm underline">
         ← Mes projets
       </Link>
@@ -45,26 +45,6 @@ export default async function ProjectPage({
         {data.project.description && <p>{data.project.description}</p>}
         <p className="text-sm">Ton rôle : {data.role}</p>
       </div>
-
-      <nav className="flex flex-wrap gap-4 text-sm">
-        <Link href={`/projects/${id}/dashboard`} className="underline">
-          Tableau de bord
-        </Link>
-        <Link href={`/projects/${id}/adr`} className="underline">
-          Décisions (ADR)
-        </Link>
-        <Link href={`/projects/${id}/kanban`} className="underline">
-          Kanban
-        </Link>
-        <Link href={`/projects/${id}/members`} className="underline">
-          Membres
-        </Link>
-        {isAdmin && (
-          <Link href={`/projects/${id}/history`} className="underline">
-            Historique
-          </Link>
-        )}
-      </nav>
 
       {error && ERRORS[error] && (
         <p

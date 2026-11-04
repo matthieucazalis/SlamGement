@@ -31,7 +31,7 @@ export default async function EditTaskPage({
   }
 
   return (
-    <main className="mx-auto max-w-xl space-y-6 p-8">
+    <main className="mx-auto max-w-xl space-y-6 p-4 sm:p-8">
       <Link href={`/projects/${id}/kanban`} className="text-sm underline">
         ← Tableau Kanban
       </Link>

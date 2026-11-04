@@ -10,7 +10,7 @@ export default async function ProjectsPage() {
   const memberships = await listProjectsForUser(user.id);
 
   return (
-    <main className="mx-auto max-w-2xl space-y-6 p-8">
+    <main className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Mes projets</h1>
         <div className="flex items-center gap-4">

@@ -32,7 +32,7 @@ export default async function EditAdrPage({
     redirect(`/projects/${id}/adr/${number}?error=locked`);
 
   return (
-    <main className="mx-auto max-w-2xl space-y-6 p-8">
+    <main className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8">
       <Link
         href={`/projects/${id}/adr/${number}`}
         className="text-sm underline"

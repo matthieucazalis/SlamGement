@@ -36,7 +36,7 @@ export default async function DashboardPage({
   }
 
   return (
-    <main className="mx-auto max-w-3xl space-y-8 p-8">
+    <main className="mx-auto max-w-3xl space-y-8 p-4 sm:p-8">
       <Link href={`/projects/${id}`} className="text-sm underline">
         ← {project.name}
       </Link>

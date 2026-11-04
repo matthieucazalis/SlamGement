@@ -39,7 +39,7 @@ export default async function MembersPage({
   const isAdmin = data.role === "ADMIN";
 
   return (
-    <main className="mx-auto max-w-2xl space-y-6 p-8">
+    <main className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8">
       <Link href={`/projects/${id}`} className="text-sm underline">
         ← {data.project.name}
       </Link>
