@@ -39,7 +39,7 @@ export default async function EditAdrPage({
       >
         ← ADR-{formatAdrNumber(number)}
       </Link>
-      <h1 className="text-2xl font-bold">Modifier l'ADR</h1>
+      <h1 className="text-2xl font-bold">Modifier l&apos;ADR</h1>
       <AdrForm
         action={updateAdrAction.bind(null, id, number)}
         initial={{

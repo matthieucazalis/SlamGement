@@ -1,0 +1,176 @@
+# Préparation de la soutenance
+
+## 1. Contraintes de l'établissement (à compléter)
+
+| Question                                                        | Réponse       |
+| --------------------------------------------------------------- | ------------- |
+| Durée totale de l'épreuve                                       | [à compléter] |
+| Dont présentation / démonstration                               | [à compléter] |
+| Dont entretien avec le jury                                     | [à compléter] |
+| Temps de préparation avant l'oral                               | [à compléter] |
+| Matériel fourni (ordinateur, projecteur, réseau, ports ouverts) | [à compléter] |
+| Documents à remettre, et date de dépôt                          | [à compléter] |
+| Règles sur l'usage d'outils d'IA à mentionner                   | [à compléter] |
+
+## 2. Plan de la présentation
+
+Les durées sont un exemple pour **20 minutes** ; garde les proportions si
+le temps change.
+
+| Partie              | Durée | Contenu                                                                                              |
+| ------------------- | ----- | ---------------------------------------------------------------------------------------------------- |
+| Contexte et besoin  | 2 min | Le problème : les décisions techniques se perdent, le travail est ailleurs. L'idée : un outil unique |
+| Conception          | 3 min | Acteurs et rôles, modèle de données, architecture en couches, planning                               |
+| Démonstration       | 8 min | Voir les blocs ci-dessous                                                                            |
+| Qualité et sécurité | 3 min | Tests, audit OWASP, déploiement                                                                      |
+| Bilan et limites    | 2 min | Ce qui a marché, les écarts de planning, ce qui reste à faire                                        |
+| Marge               | 2 min | Pour ne pas dépasser                                                                                 |
+
+Cinq idées à faire passer :
+
+1. **Un outil unique** pour le travail et les décisions, avec un lien entre les deux.
+2. **La règle métier est isolée et testée** : les statuts d'ADR existent dans un module sans dépendance, couvert par des tests sur les 25 combinaisons possibles.
+3. **La sécurité est côté serveur** : l'interface cache des boutons, le serveur refuse.
+4. **Rien n'est modifié sans trace** : action et audit dans la même transaction.
+5. **Les limites sont connues** : liste prête dans `docs/SECURITE.md`.
+
+## 3. Les données de démonstration
+
+Après `npm run db:seed`, le projet **SlamGement (démonstration)** contient :
+
+| Élément | Contenu                                                                                                                                              |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Comptes | `alice@slamgement.test` (administratrice), `bruno@slamgement.test` et `chloe@slamgement.test` (membres)                                              |
+| ADR 1   | Stocker les sessions en base : **Remplacé** par l'ADR 2                                                                                              |
+| ADR 2   | Sessions JWT avec Auth.js : Accepté, tâche liée                                                                                                      |
+| ADR 3   | PostgreSQL : Accepté, **schéma Mermaid**, tâche liée                                                                                                 |
+| ADR 4   | Drag and drop : **Proposé**, tâche liée                                                                                                              |
+| ADR 5   | Utiliser MongoDB : **Rejeté**                                                                                                                        |
+| ADR 6   | Hébergement en conteneurs : Accepté, **sans tâche liée**                                                                                             |
+| Tâches  | MCD (Terminé), Auth.js (Revue), Docker (En cours), Tests Playwright (À faire, **en retard**), dnd-kit (À faire), Dossier BTS (À faire, non assignée) |
+
+Sur le tableau de bord : 6 ADR, 6 tâches, **1 en retard**, et l'ADR 6 dans « Décisions acceptées sans tâche liée ».
+
+## 4. Les blocs de démonstration
+
+### B1 · Connexion (1 min)
+
+- **Faire** : connexion en `alice`.
+- **Dire** : mot de passe haché, message d'erreur neutre, limitation à 5 essais en 15 minutes.
+- **Montrer au besoin** : un mauvais mot de passe, le message neutre.
+
+### B2 · Tableau de bord (1 min)
+
+- **Faire** : ouvrir le projet, puis **Tableau de bord**.
+- **Dire** : « Voici l'état du projet d'un coup d'œil. Une tâche est en retard, et une décision acceptée n'a aucune tâche pour la mettre en œuvre. » C'est le croisement des deux modules.
+
+### B3 · Un ADR complet (2 min)
+
+- **Faire** : ouvrir l'**ADR 3** : Markdown rendu, schéma dessiné, tâche liée, **Exporter .md**.
+- **Dire** : le Markdown est rendu sans HTML brut, le schéma est en mode strict ; l'export est prêt pour un dépôt Git.
+- **Montrer** : le fichier téléchargé, ou le ZIP de la liste.
+
+### B4 · Le cycle de vie (2 min)
+
+- **Faire** : créer un ADR (observer l'aperçu en direct), l'**accepter**, constater que **Modifier** disparaît. Ouvrir l'**ADR 1** : « Remplacé par ADR-0002 », sans aucun bouton.
+- **Dire** : les transitions sont définies une seule fois et testées ; le serveur refuserait un changement interdit même avec une requête forgée.
+
+### B5 · Le Kanban (1,5 min)
+
+- **Faire** : déplacer une carte, filtrer par membre, montrer la tâche en retard en rouge et le lien vers l'ADR.
+- **Dire** : l'assignation et la liaison sont vérifiées côté serveur (seul un membre peut être assigné, seul un ADR du même projet peut être lié).
+
+### B6 · Les droits (1,5 min)
+
+- **Faire** : dans une fenêtre privée, se connecter en `bruno` : pas de formulaire d'invitation, pas d'historique. Avec le compte `externe`, coller l'URL du projet : **404**.
+- **Dire** : « Même si on connaît l'adresse, le serveur ne révèle pas que le projet existe. »
+- **Préparation** : le compte `externe@slamgement.test` doit avoir été créé **avant** (il n'est pas dans le jeu de données).
+
+### B7 · L'historique (1 min)
+
+- **Faire** : en `alice`, page **Historique**, filtrer par action.
+- **Dire** : phrases lisibles ; l'action et sa trace sont dans la même transaction.
+
+### B8 · Le contenu malveillant (1 min)
+
+- **Faire** : créer un ADR dont le contexte contient `<script>alert(1)</script>` et `[clic](javascript:alert(1))`.
+- **Dire** : aucune exécution : le HTML n'est pas interprété et les liens dangereux sont neutralisés. Test automatisé associé.
+- **Astuce** : prépare le texte dans un fichier pour le coller.
+
+### B9 · Les tests (1,5 min)
+
+- **Faire** : dans le terminal, `npm test` (quelques secondes), puis ouvrir le **rapport Playwright déjà généré**.
+- **Dire** : 42 tests unitaires sur les règles métier, 21 parcours de bout en bout sur le build de production.
+- **Ne pas faire** : relancer les tests de bout en bout en direct (plusieurs minutes).
+
+### B10 · Déploiement et installation (1 min)
+
+- **Faire** : montrer `docker compose ... ps` (trois services), et l'icône d'installation de l'application.
+- **Dire** : image en plusieurs étapes, migrations automatiques, base non exposée, HTTPS derrière un reverse proxy.
+
+### Choisir les blocs selon le temps de démonstration
+
+| Temps          | Blocs                    |
+| -------------- | ------------------------ |
+| 5 min          | B2, B3, B6               |
+| 8 min          | B2, B3, B4, B6, B8       |
+| 12 min         | B1 à B8, un aperçu de B9 |
+| 15 min ou plus | Tous                     |
+
+## 5. Préparation
+
+### La veille
+
+```bash
+npx prisma migrate reset     # SUPPRIME toutes les données de développement
+npm run db:seed
+```
+
+Puis :
+
+1. Créer le compte **`externe@slamgement.test`** par la page d'inscription.
+2. Régénérer les rapports : `npm test`, et `npm run test:e2e` (laisser le rapport disponible avec `npm run test:e2e:report`).
+3. Prendre les **captures d'écran de secours** de chaque bloc.
+4. Chronométrer **trois répétitions complètes** à voix haute, de préférence devant quelqu'un.
+
+Pour la stack Docker de production (instance de démonstration uniquement) :
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod down -v   # IRRÉVERSIBLE : efface la base
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm migrate npx tsx prisma/seed.mts
+```
+
+### 15 minutes avant
+
+- Serveur lancé et **page déjà ouverte et connectée** : navigateur normal en `alice`, fenêtre privée prête pour `bruno`.
+- Zoom du navigateur à **125 %**, notifications coupées, onglets personnels fermés.
+- Terminal ouvert dans le dossier du projet, police agrandie.
+- Fichier du texte malveillant prêt à coller.
+- Support du dossier et diapositives ouverts.
+
+### Plan B
+
+| Si…                                         | Alors…                                                                |
+| ------------------------------------------- | --------------------------------------------------------------------- |
+| Le réseau ou le site en ligne ne répond pas | Lancer le projet **en local** (`docker compose up -d`, `npm run dev`) |
+| Docker ne démarre pas                       | Utiliser `npm run dev` avec la base de développement                  |
+| Un écran plante en direct                   | Passer à la capture de secours, sans t'excuser longuement             |
+| Tout tombe en panne                         | Dérouler les captures et la vidéo de secours, en commentant           |
+
+Enregistre une **vidéo d'écran** de la démonstration complète : c'est ton filet de sécurité.
+
+## 6. Pendant l'oral
+
+- Annonce le plan au début, et **respecte-le**.
+- Commente ce que tu fais en parlant : le jury lit l'écran, pas ta pensée.
+- Si tu ne sais pas, dis-le et explique comment tu chercherais : c'est mieux qu'une réponse inventée.
+- Garde les **limites** pour toi-même d'abord : annonce-les avant qu'on te les fasse remarquer.
+
+## 7. Se préparer aux questions
+
+Révise les questions de `docs/SECURITE.md` et le tableau de questions probables
+du plan de projet. Relis surtout `adr.service.ts`, `permissions.ts`,
+`audit.service.ts`, `auth.ts` et le schéma Prisma jusqu'à pouvoir expliquer
+chaque choix **sans notes**. Un jury juge ta compréhension, pas la quantité de
+fonctionnalités.

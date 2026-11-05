@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ForbiddenError } from "@/lib/permissions";
+import { roleLabel } from "@/lib/roles";
 import { requireUser } from "@/lib/session";
 import { getProjectForUser } from "@/services/project.service";
 import { ProjectNav } from "./project-nav";
@@ -34,7 +35,7 @@ export default async function ProjectLayout({
             <span aria-hidden="true">/</span>
             <span className="truncate font-semibold">{data.project.name}</span>
           </div>
-          <span className="shrink-0 text-xs uppercase">{data.role}</span>
+          <span className="shrink-0 text-xs">{roleLabel(data.role)}</span>
         </div>
         <ProjectNav projectId={id} isAdmin={data.role === "ADMIN"} />
       </header>

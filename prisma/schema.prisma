@@ -41,6 +41,7 @@ model Project {
   id          String       @id @default(cuid())
   name        String
   description String?
+  adrCounter  Int          @default(0)
   createdAt   DateTime     @default(now())
   memberships Membership[]
   invitations Invitation[]
@@ -70,6 +71,8 @@ model Invitation {
   expiresAt  DateTime
   acceptedAt DateTime?
   project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
 }
 
 model Adr {
@@ -135,6 +138,8 @@ model Task {
   adr         Adr?       @relation(fields: [adrId], references: [id], onDelete: SetNull)
 
   @@index([projectId, status, position])
+  @@index([adrId])
+  @@index([assigneeId])
 }
 
 model RateLimit {

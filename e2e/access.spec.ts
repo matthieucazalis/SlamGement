@@ -80,7 +80,7 @@ test.describe("contrôle d'accès", () => {
     await pageB.goto(inviteLink);
     await pageB.getByRole("button", { name: "Rejoindre le projet" }).click();
     await pageB.waitForURL(new RegExp(`${projectPath}$`));
-    await expect(pageB.getByText("Ton rôle : MEMBER")).toBeVisible();
+    await expect(pageB.getByText("Ton rôle : Membre")).toBeVisible();
 
     await pageB.goto(`${projectPath}/members`);
     await expect(pageB.getByText("Inviter un collaborateur")).toHaveCount(0);

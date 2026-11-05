@@ -12,8 +12,7 @@ export default async function ProfilePage() {
   return (
     <main className="mx-auto max-w-md space-y-6 p-4 sm:p-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Mon profil</h1>git checkout dev git
-        checkout -b feature/projects
+        <h1 className="text-2xl font-bold">Mon profil</h1>
         <Link href="/projects" className="text-sm underline">
           Retour aux projets
         </Link>

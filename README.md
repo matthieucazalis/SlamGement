@@ -1,48 +1,71 @@
 # SlamGement
 
 Application web de gestion de projet orientée **décisions d'architecture**.
-Elle permet à une équipe d'organiser son travail et de documenter ses choix
-techniques sous forme d'ADR (Architecture Decision Records).
+Une équipe y organise son travail (tableau Kanban) et documente ses choix
+techniques sous forme d'ADR (Architecture Decision Records), avec export
+Markdown prêt pour un dépôt Git.
 
-Projet réalisé seul dans le cadre de l'épreuve finale du BTS SIO option SLAM.
+Projet réalisé seul, dans le cadre de la fin de formation du BTS SIO option SLAM.
 
 ## Fonctionnalités
 
-- **Comptes et projets** : inscription, connexion, espaces de travail, invitation de collaborateurs
-- **Rôles** : Administrateur ou Membre, définis par projet
-- **Gestionnaire d'ADR** : formulaire structuré, cycle de vie des statuts, schémas Mermaid
-- **Export Markdown** : un ADR ou tous les ADR d'un projet, prêts pour un dépôt Git
-- **Traçabilité** : historique des actions et tableau de bord
-- **Kanban** : tâches par colonne, assignation, échéances, lien avec les ADR
+- **Comptes et projets** : inscription, connexion, profil, espaces de travail
+- **Rôles par projet** : administrateur ou membre, invitation par lien à usage unique
+- **ADR** : formulaire structuré, cycle de vie des statuts, remplacement d'une décision par une autre
+- **Rendu** : Markdown et schémas Mermaid, aperçu en direct
+- **Export** : un ADR ou tous les ADR d'un projet (ZIP), au format Markdown
+- **Kanban** : 4 colonnes, assignation, échéances, filtres, lien tâche ↔ ADR
+- **Traçabilité** : historique des actions, tableau de bord
+- **Installable** sur téléphone (PWA)
 
 ## Technologies
 
-Next.js · TypeScript · Prisma · PostgreSQL · Auth.js · Tailwind CSS · Docker
+Next.js · TypeScript · Prisma · PostgreSQL · Auth.js · Tailwind CSS · shadcn/ui ·
+Vitest · Playwright · Docker
 
-## Installation
+## Lancer en développement
 
 ```bash
 git clone <url-du-depot>
 cd slamgement
-cp .env.example .env
-docker compose up -d
+cp .env.example .env        # puis renseigner AUTH_SECRET (openssl rand -base64 32)
+                            # (le fichier .env n'est jamais versionné)
+docker compose up -d        # base PostgreSQL
 npm install
 npx prisma migrate dev
+npm run db:seed             # jeu de démonstration (facultatif)
 npm run dev
 ```
 
 L'application est disponible sur http://localhost:3000.
 
+Comptes de démonstration (après `npm run db:seed`) :
+`alice@slamgement.test` (administratrice), `bruno@slamgement.test` et
+`chloe@slamgement.test` (membres). Mot de passe : `Demo-SlamGement-1`.
+
+## Tests
+
+```bash
+npm run typecheck   # vérification TypeScript
+npm run lint        # ESLint
+npm test            # tests unitaires (règles métier)
+npm run test:e2e    # tests de bout en bout (voir docs/TESTS.md pour la base de test)
+```
+
+## Déploiement
+
+Une image Docker et une stack de production sont fournies : voir
+[docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md).
+
 ## Documentation
 
-- [Planning et jalons](docs/PLANNING.md)
-- Diagrammes UML et modèle de données : `docs/diagrammes/`
-- Maquettes : `docs/maquettes/`
-
-## Avancement
-
-Voir le planning. Version actuelle : _en conception_.
+- [Architecture et diagrammes](docs/ARCHITECTURE.md)
+- [Sécurité](docs/SECURITE.md)
+- [Tests](docs/TESTS.md)
+- [Déploiement](docs/DEPLOIEMENT.md)
+- [Manuel utilisateur](docs/MANUEL.md)
+- [Planning et suivi réel](docs/PLANNING.md)
 
 ## Auteur
 
-Matthieu CAZALIS, BTS SIO SLAM, année 2026-2027
+Prénom Nom, BTS SIO SLAM, 2026-2027

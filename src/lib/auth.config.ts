@@ -12,10 +12,11 @@ export const authConfig = {
       const path = nextUrl.pathname;
 
       // pages accessibles à tous (ex. lien d'invitation)
-      if (OPEN_PATHS.some((p) => path.startsWith(p))) return true;
+      if (OPEN_PATHS.some((p) => path === p || path.startsWith(`${p}/`)))
+        return true;
 
       // pages de connexion : inutiles si on est déjà connecté
-      if (AUTH_PAGES.some((p) => path.startsWith(p))) {
+      if (AUTH_PAGES.some((p) => path === p || path.startsWith(`${p}/`))) {
         return isLoggedIn
           ? Response.redirect(new URL("/projects", nextUrl))
           : true;

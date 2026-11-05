@@ -85,6 +85,12 @@ export async function removeMember(
 
     await tx.membership.delete({ where: { id: target.id } });
 
+    // une personne qui n'est plus membre ne doit pas rester assignée à des tâches
+    await tx.task.updateMany({
+      where: { projectId, assigneeId: target.userId },
+      data: { assigneeId: null },
+    });
+
     await logAction(
       {
         userId: actorId,

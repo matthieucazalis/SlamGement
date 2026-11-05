@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { AdrStatusBadge } from "@/components/adr-status-badge";
 import { ADR_STATUSES } from "@/lib/adr-status";
 import { describeAudit } from "@/lib/audit-labels";
+import { formatDateTime } from "@/lib/format";
 import { ForbiddenError } from "@/lib/permissions";
 import { requireUser } from "@/lib/session";
 import { getDashboard } from "@/services/dashboard.service";
@@ -51,7 +52,7 @@ export default async function DashboardPage({
         <h2 className="text-lg font-semibold">ADR par statut</h2>
         {data.totalAdrs === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Aucun ADR pour l'instant.
+            Aucun ADR pour l&apos;instant.
           </p>
         ) : (
           <ul className="space-y-2">
@@ -87,7 +88,7 @@ export default async function DashboardPage({
               href={`/projects/${id}/history`}
               className="text-sm underline"
             >
-              Tout l'historique
+              Tout l&apos;historique
             </Link>
           )}
         </div>
@@ -105,7 +106,7 @@ export default async function DashboardPage({
                   {describeAudit(log.action, log.metadata)}
                 </span>
                 <span className="text-muted-foreground">
-                  {log.createdAt.toLocaleString("fr-FR")}
+                  {formatDateTime(log.createdAt)}
                 </span>
               </li>
             ))}

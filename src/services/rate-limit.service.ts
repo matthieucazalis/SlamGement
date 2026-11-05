@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import {
   LOGIN_LIMITS,
+  WINDOW_MS,
   isLimitReached,
   isWindowExpired,
 } from "@/lib/rate-limit";
@@ -14,22 +15,23 @@ async function currentCount(key: string) {
   return row.count;
 }
 
+// Une seule requête SQL atomique : lire puis écrire en deux temps laisserait
+// passer des tentatives en rafale (chacune lirait le même compteur).
 async function increment(key: string) {
-  const row = await prisma.rateLimit.findUnique({ where: { key } });
   const now = new Date();
-
-  if (!row || isWindowExpired(row.windowStart, now)) {
-    await prisma.rateLimit.upsert({
-      where: { key },
-      create: { key, count: 1, windowStart: now },
-      update: { count: 1, windowStart: now },
-    });
-  } else {
-    await prisma.rateLimit.update({
-      where: { key },
-      data: { count: { increment: 1 } },
-    });
-  }
+  const expiredBefore = new Date(now.getTime() - WINDOW_MS);
+  await prisma.$executeRaw`
+    INSERT INTO "RateLimit" ("key", "count", "windowStart")
+    VALUES (${key}, 1, ${now})
+    ON CONFLICT ("key") DO UPDATE SET
+      "count" = CASE
+        WHEN "RateLimit"."windowStart" <= ${expiredBefore} THEN 1
+        ELSE "RateLimit"."count" + 1
+      END,
+      "windowStart" = CASE
+        WHEN "RateLimit"."windowStart" <= ${expiredBefore} THEN ${now}
+        ELSE "RateLimit"."windowStart"
+      END`;
 }
 
 export async function isLoginBlocked(email: string, ip: string | null) {

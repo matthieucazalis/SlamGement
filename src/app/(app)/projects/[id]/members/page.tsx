@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ForbiddenError } from "@/lib/permissions";
+import { roleLabel } from "@/lib/roles";
 import { requireUser } from "@/lib/session";
 import { listMembers } from "@/services/member.service";
 import { getProjectForUser } from "@/services/project.service";
@@ -90,7 +91,7 @@ export default async function MembersPage({
                     </Button>
                   </form>
                 ) : (
-                  <span className="text-xs uppercase">{m.role}</span>
+                  <span className="text-xs">{roleLabel(m.role)}</span>
                 )}
 
                 {(isAdmin || isSelf) && (

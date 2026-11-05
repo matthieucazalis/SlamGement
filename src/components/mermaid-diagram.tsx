@@ -18,6 +18,7 @@ export function MermaidDiagram({ code }: { code: string }) {
           theme: "neutral",
         });
         const id = `mermaid-${rawId.replace(/[^a-zA-Z0-9]/g, "")}`;
+        await mermaid.parse(code); // lève une erreur sans toucher au DOM
         const result = await mermaid.render(id, code);
         if (!cancelled) {
           setSvg(result.svg);

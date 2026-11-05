@@ -14,10 +14,17 @@ export async function registerUser(input: {
   if (existing) throw new EmailTakenError();
 
   const passwordHash = await bcrypt.hash(input.password, 12);
-  return prisma.user.create({
-    data: { name: input.name, email: input.email, passwordHash },
-    select: { id: true, email: true, name: true },
-  });
+  try {
+    return await prisma.user.create({
+      data: { name: input.name, email: input.email, passwordHash },
+      select: { id: true, email: true, name: true },
+    });
+  } catch (e) {
+    // deux inscriptions simultanées avec le même email : la contrainte
+    // d'unicité de la base tranche (code Prisma P2002)
+    if ((e as { code?: string }).code === "P2002") throw new EmailTakenError();
+    throw e;
+  }
 }
 
 const DUMMY_HASH = bcrypt.hashSync("mot-de-passe-factice", 12);

@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { signIn } from "@/lib/auth";
 import { normalizeIp } from "@/lib/rate-limit";
+import { safeCallbackPath } from "@/lib/safe-redirect";
 import { loginSchema, registerSchema } from "@/lib/validators/auth";
 import { isLoginBlocked } from "@/services/rate-limit.service";
 import { EmailTakenError, registerUser } from "@/services/user.service";
@@ -25,7 +26,13 @@ export async function registerAction(
       return { error: "Cet email est déjà utilisé." };
     throw e;
   }
-  redirect("/login?registered=1");
+  const callbackUrl = formData.get("callbackUrl");
+  const next = callbackUrl ? safeCallbackPath(callbackUrl, "") : "";
+  redirect(
+    next
+      ? `/login?registered=1&callbackUrl=${encodeURIComponent(next)}`
+      : "/login?registered=1",
+  );
 }
 
 export async function loginAction(
@@ -40,7 +47,10 @@ export async function loginAction(
     return { error: "Trop de tentatives. Réessaie dans 15 minutes." };
 
   try {
-    await signIn("credentials", { ...parsed.data, redirectTo: "/projects" });
+    await signIn("credentials", {
+      ...parsed.data,
+      redirectTo: safeCallbackPath(formData.get("callbackUrl")),
+    });
   } catch (e) {
     if (e instanceof AuthError) return { error: "Identifiants invalides." };
     throw e;

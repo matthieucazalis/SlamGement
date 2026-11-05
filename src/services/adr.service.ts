@@ -14,11 +14,6 @@ export class InvalidTransitionError extends Error {}
 export class InvalidSupersessionError extends Error {}
 export class AdrInUseError extends Error {}
 
-const isUniqueViolation = (e: unknown) =>
-  typeof e === "object" &&
-  e !== null &&
-  (e as { code?: string }).code === "P2002";
-
 export async function listAdrs(
   userId: string,
   projectId: string,
@@ -57,37 +52,33 @@ export async function createAdr(
 ) {
   await requireRole(userId, projectId);
 
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      return await prisma.$transaction(async (tx) => {
-        const last = await tx.adr.aggregate({
-          where: { projectId },
-          _max: { number: true },
-        });
-        const number = (last._max.number ?? 0) + 1;
+  return prisma.$transaction(async (tx) => {
+    // Le compteur est incrémenté de façon atomique (verrou de ligne) : deux
+    // créations simultanées obtiennent deux numéros différents, et un numéro
+    // n'est jamais réattribué après une suppression.
+    const { adrCounter: number } = await tx.project.update({
+      where: { id: projectId },
+      data: { adrCounter: { increment: 1 } },
+      select: { adrCounter: true },
+    });
 
-        const adr = await tx.adr.create({
-          data: { projectId, number, authorId: userId, ...input },
-        });
+    const adr = await tx.adr.create({
+      data: { projectId, number, authorId: userId, ...input },
+    });
 
-        await logAction(
-          {
-            userId,
-            projectId,
-            action: AUDIT_ACTIONS.ADR_CREATED,
-            entityType: "Adr",
-            entityId: adr.id,
-            metadata: { number: adr.number, title: adr.title },
-          },
-          tx,
-        );
-        return adr;
-      });
-    } catch (e) {
-      if (!isUniqueViolation(e) || attempt === 2) throw e;
-    }
-  }
-  throw new Error("Création impossible");
+    await logAction(
+      {
+        userId,
+        projectId,
+        action: AUDIT_ACTIONS.ADR_CREATED,
+        entityType: "Adr",
+        entityId: adr.id,
+        metadata: { number: adr.number, title: adr.title },
+      },
+      tx,
+    );
+    return adr;
+  });
 }
 
 export async function updateAdr(
@@ -162,7 +153,13 @@ export async function changeAdrStatus(
       const replacement = await tx.adr.findUnique({
         where: { projectId_number: { projectId, number: replacementNumber } },
       });
-      if (!replacement || replacement.status === "REJECTED")
+      // un ADR rejeté, déprécié ou déjà remplacé ne peut pas en remplacer un autre
+      if (
+        !replacement ||
+        replacement.status === "REJECTED" ||
+        replacement.status === "DEPRECATED" ||
+        replacement.status === "SUPERSEDED"
+      )
         throw new InvalidSupersessionError();
 
       const taken = await tx.adr.findFirst({

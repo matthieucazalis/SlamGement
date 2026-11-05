@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ForbiddenError } from "@/lib/permissions";
+import { roleLabel } from "@/lib/roles";
 import { requireUser } from "@/lib/session";
 import { getProjectForUser } from "@/services/project.service";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,7 @@ export default async function ProjectPage({
       <div className="space-y-2">
         <h1 className="text-2xl font-bold">{data.project.name}</h1>
         {data.project.description && <p>{data.project.description}</p>}
-        <p className="text-sm">Ton rôle : {data.role}</p>
+        <p className="text-sm">Ton rôle : {roleLabel(data.role)}</p>
       </div>
 
       {error && ERRORS[error] && (

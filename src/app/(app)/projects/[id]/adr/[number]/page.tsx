@@ -9,6 +9,7 @@ import {
   isContentEditable,
   type AdrStatusValue,
 } from "@/lib/adr-status";
+import { formatDate } from "@/lib/format";
 import { ForbiddenError, requireRole } from "@/lib/permissions";
 import { requireUser } from "@/lib/session";
 import { TASK_STATUS_LABELS } from "@/lib/task-status";
@@ -29,7 +30,7 @@ const ACTION_LABELS: Record<AdrStatusValue, string> = {
 const ERRORS: Record<string, string> = {
   transition: "Ce changement de statut n'est pas autorisé.",
   supersession:
-    "Remplacement invalide : choisis le numéro d'un autre ADR existant, non rejeté et pas déjà utilisé comme remplaçant.",
+    "Remplacement invalide : choisis le numéro d'un autre ADR existant (proposé ou accepté) qui ne remplace pas déjà une autre décision.",
   forbidden: "Action non autorisée.",
   invalid: "Données invalides.",
   locked: "Cet ADR n'est plus modifiable.",
@@ -88,7 +89,7 @@ export default async function AdrDetailPage({
         <div className="flex items-center gap-3 text-sm">
           <AdrStatusBadge status={adr.status} />
           <span>
-            Par {adr.author.name} · {adr.createdAt.toLocaleDateString("fr-FR")}
+            Par {adr.author.name} · {formatDate(adr.createdAt)}
           </span>
         </div>
         {adr.supersededBy && (
@@ -151,7 +152,7 @@ export default async function AdrDetailPage({
             <input type="hidden" name="newStatus" value="SUPERSEDED" />
             <div>
               <label htmlFor="replacement" className="text-xs">
-                Remplacé par l'ADR n°
+                Remplacé par l&apos;ADR n°
               </label>
               <Input
                 id="replacement"
@@ -246,7 +247,7 @@ export default async function AdrDetailPage({
               Je confirme vouloir supprimer définitivement cet ADR
             </label>
             <Button type="submit" variant="destructive" size="sm">
-              Supprimer l'ADR
+              Supprimer l&apos;ADR
             </Button>
           </form>
         </section>

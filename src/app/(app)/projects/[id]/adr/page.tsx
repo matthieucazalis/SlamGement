@@ -7,6 +7,7 @@ import {
   type AdrStatusValue,
 } from "@/lib/adr-status";
 import { formatAdrNumber } from "@/lib/adr-format";
+import { formatDate } from "@/lib/format";
 import { ForbiddenError } from "@/lib/permissions";
 import { requireUser } from "@/lib/session";
 import { listAdrs } from "@/services/adr.service";
@@ -24,8 +25,7 @@ export default async function AdrListPage({
   const user = await requireUser();
 
   const filter = ADR_STATUSES.find((s) => s === status) as
-    | AdrStatusValue
-    | undefined;
+    AdrStatusValue | undefined;
 
   let project;
   let adrs;
@@ -47,7 +47,7 @@ export default async function AdrListPage({
       </Link>
 
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Décisions d'architecture</h1>
+        <h1 className="text-2xl font-bold">Décisions d&apos;architecture</h1>
         <div className="flex items-center gap-2">
           <a
             href={`/projects/${id}/adr/export`}
@@ -113,9 +113,7 @@ export default async function AdrListPage({
                     <AdrStatusBadge status={adr.status} />
                   </td>
                   <td className="p-3">{adr.author.name}</td>
-                  <td className="p-3">
-                    {adr.createdAt.toLocaleDateString("fr-FR")}
-                  </td>
+                  <td className="p-3">{formatDate(adr.createdAt)}</td>
                 </tr>
               ))}
             </tbody>

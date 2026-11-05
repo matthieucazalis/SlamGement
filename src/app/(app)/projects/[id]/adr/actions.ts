@@ -20,8 +20,7 @@ import {
 } from "@/services/adr.service";
 
 export type AdrFormState =
-  | { error?: string; values?: Record<string, string> }
-  | undefined;
+  { error?: string; values?: Record<string, string> } | undefined;
 
 export async function createAdrAction(
   projectId: string,

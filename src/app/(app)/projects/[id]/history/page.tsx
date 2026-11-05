@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { AUDIT_ACTION_LABELS, describeAudit } from "@/lib/audit-labels";
+import { formatDateTime, startOfDayInAppZone } from "@/lib/format";
 import { ForbiddenError } from "@/lib/permissions";
 import { requireUser } from "@/lib/session";
 import { listAuditActors, listAuditLogs } from "@/services/audit.service";
@@ -25,14 +26,6 @@ const querySchema = z.object({
   page: z.coerce.number().int().min(1).max(10000).catch(1),
 });
 
-function parseDay(value: string | undefined, plusDays = 0) {
-  if (!value) return undefined;
-  const d = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(d.getTime())) return undefined;
-  d.setDate(d.getDate() + plusDays);
-  return d;
-}
-
 const FIELD_CLASS = "h-9 w-full rounded-md border bg-transparent px-2 text-sm";
 
 export default async function HistoryPage({
@@ -55,8 +48,8 @@ export default async function HistoryPage({
     result = await listAuditLogs(user.id, id, {
       userId: q.user || undefined,
       action: q.action,
-      from: parseDay(q.from),
-      to: parseDay(q.to, 1), // la date de fin est incluse
+      from: startOfDayInAppZone(q.from),
+      to: startOfDayInAppZone(q.to, 1), // la date de fin est incluse
       page: q.page,
     });
   } catch (e) {
@@ -176,7 +169,7 @@ export default async function HistoryPage({
               {result.items.map((log) => (
                 <tr key={log.id}>
                   <td className="whitespace-nowrap p-3">
-                    {log.createdAt.toLocaleString("fr-FR")}
+                    {formatDateTime(log.createdAt)}
                   </td>
                   <td className="p-3">{log.user.name}</td>
                   <td className="p-3">

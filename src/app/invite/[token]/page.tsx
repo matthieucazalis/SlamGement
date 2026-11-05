@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { roleLabel } from "@/lib/roles";
 import { requireUser } from "@/lib/session";
 import {
   EmailMismatchError,
@@ -47,13 +48,13 @@ export default async function InvitePage({
         </CardHeader>
         <CardContent className="space-y-4">
           {!invitation ? (
-            <p>Ce lien d'invitation est invalide ou a expiré.</p>
+            <p>Ce lien d&apos;invitation est invalide ou a expiré.</p>
           ) : (
             <>
               <p>
                 Tu es invité(e) à rejoindre le projet{" "}
                 <strong>{invitation.project.name}</strong> avec le rôle{" "}
-                <strong>{invitation.role}</strong>.
+                <strong>{roleLabel(invitation.role)}</strong>.
               </p>
 
               {error === "email" && (
@@ -64,7 +65,7 @@ export default async function InvitePage({
               )}
               {error === "invalid" && (
                 <p className="text-sm text-red-600" role="alert">
-                  Cette invitation n'est plus valable.
+                  Cette invitation n&apos;est plus valable.
                 </p>
               )}
 
@@ -76,14 +77,21 @@ export default async function InvitePage({
                 </form>
               ) : (
                 <p className="text-sm">
-                  Connecte-toi ou crée un compte avec l'adresse{" "}
-                  <strong>{invitation.email}</strong>, puis rouvre ce lien.
+                  Connecte-toi ou crée un compte avec l&apos;adresse{" "}
+                  <strong>{invitation.email}</strong> : tu reviendras ensuite
+                  sur cette invitation.
                   <br />
-                  <Link href="/login" className="underline">
+                  <Link
+                    href={`/login?callbackUrl=${encodeURIComponent(`/invite/${token}`)}`}
+                    className="underline"
+                  >
                     Connexion
                   </Link>
                   {" · "}
-                  <Link href="/register" className="underline">
+                  <Link
+                    href={`/register?callbackUrl=${encodeURIComponent(`/invite/${token}`)}`}
+                    className="underline"
+                  >
                     Inscription
                   </Link>
                 </p>

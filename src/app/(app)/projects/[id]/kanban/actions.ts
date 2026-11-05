@@ -18,8 +18,7 @@ import {
 } from "@/services/task.service";
 
 export type TaskFormState =
-  | { error?: string; values?: Record<string, string> }
-  | undefined;
+  { error?: string; values?: Record<string, string> } | undefined;
 
 function serviceError(e: unknown): string | null {
   if (e instanceof ForbiddenError) return "Accès refusé.";
@@ -82,7 +81,6 @@ export async function moveTaskAction(
   projectId: string,
   taskId: string,
   newStatus: string,
-  _formData: FormData,
 ) {
   const user = await requireUser();
   const base = `/projects/${projectId}/kanban`;

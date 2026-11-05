@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { signOut } from "@/lib/auth";
+import { roleLabel } from "@/lib/roles";
 import { requireUser } from "@/lib/session";
 import { listProjectsForUser } from "@/services/project.service";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,7 @@ export default async function ProjectsPage() {
 
       {memberships.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Aucun projet pour l'instant. Crée le premier ci-dessous.
+          Aucun projet pour l&apos;instant. Crée le premier ci-dessous.
         </p>
       ) : (
         <ul className="space-y-2">
@@ -43,7 +44,7 @@ export default async function ProjectsPage() {
                 className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted"
               >
                 <span className="font-medium">{project.name}</span>
-                <span className="text-xs uppercase">{role}</span>
+                <span className="text-xs">{roleLabel(role)}</span>
               </Link>
             </li>
           ))}
