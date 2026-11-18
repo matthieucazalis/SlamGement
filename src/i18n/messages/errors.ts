@@ -1,0 +1,70 @@
+import type { DeepStrings } from "./types";
+
+const fr = {
+  forbidden: "Accès refusé.",
+  adminOnly: "Action réservée aux administrateurs.",
+  notAllowed: "Action non autorisée.",
+  invalidData: "Données invalides.",
+  alreadyMember: "Cette personne est déjà membre du projet.",
+  emailTaken: "Cet email est déjà utilisé.",
+  invalidCredentials: "Identifiants invalides.",
+  tooManyAttempts: "Trop de tentatives. Réessaie dans 15 minutes.",
+  wrongPassword: "Mot de passe actuel incorrect.",
+  adrNotFound: "ADR introuvable.",
+  adrLocked: "Cet ADR n'est plus modifiable (seuls les ADR proposés le sont).",
+  taskNotFound: "Tâche introuvable.",
+  invalidAssignee: "Cette personne n'est pas membre du projet.",
+  pageTitle: "Une erreur est survenue",
+  pageText: "Quelque chose s'est mal passé. Tu peux réessayer.",
+  retry: "Réessayer",
+  messageNotAllowed: "Message refusé.",
+  tooManyMessages: "Tu envoies trop de messages. Patiente un instant.",
+  invalidAdr: "Cet ADR n'existe pas dans ce projet.",
+};
+
+const en: DeepStrings<typeof fr> = {
+  forbidden: "Access denied.",
+  adminOnly: "This action is reserved for administrators.",
+  notAllowed: "Action not allowed.",
+  invalidData: "Invalid data.",
+  alreadyMember: "This person is already a member of the project.",
+  emailTaken: "This email address is already in use.",
+  invalidCredentials: "Invalid credentials.",
+  tooManyAttempts: "Too many attempts. Try again in 15 minutes.",
+  wrongPassword: "Current password is incorrect.",
+  adrNotFound: "ADR not found.",
+  adrLocked: "This ADR can no longer be edited (only proposed ADRs can).",
+  taskNotFound: "Task not found.",
+  invalidAssignee: "This person is not a member of the project.",
+  pageTitle: "Something went wrong",
+  pageText: "Something went wrong. You can try again.",
+  retry: "Try again",
+  messageNotAllowed: "Message refused.",
+  tooManyMessages: "You are sending too many messages. Please wait a moment.",
+  invalidAdr: "This ADR does not exist in this project.",
+};
+
+const de: DeepStrings<typeof fr> = {
+  forbidden: "Zugriff verweigert.",
+  adminOnly: "Diese Aktion ist Administratoren vorbehalten.",
+  notAllowed: "Aktion nicht erlaubt.",
+  invalidData: "Ungültige Daten.",
+  alreadyMember: "Diese Person ist bereits Mitglied des Projekts.",
+  emailTaken: "Diese E-Mail-Adresse wird bereits verwendet.",
+  invalidCredentials: "Ungültige Anmeldedaten.",
+  tooManyAttempts: "Zu viele Versuche. Versuche es in 15 Minuten erneut.",
+  wrongPassword: "Das aktuelle Passwort ist falsch.",
+  adrNotFound: "ADR nicht gefunden.",
+  adrLocked:
+    "Dieses ADR kann nicht mehr bearbeitet werden (nur vorgeschlagene ADRs).",
+  taskNotFound: "Aufgabe nicht gefunden.",
+  invalidAssignee: "Diese Person ist kein Mitglied des Projekts.",
+  pageTitle: "Ein Fehler ist aufgetreten",
+  pageText: "Etwas ist schiefgelaufen. Du kannst es erneut versuchen.",
+  retry: "Erneut versuchen",
+  messageNotAllowed: "Nachricht abgelehnt.",
+  tooManyMessages: "Du sendest zu viele Nachrichten. Bitte warte einen Moment.",
+  invalidAdr: "Dieses ADR existiert in diesem Projekt nicht.",
+};
+
+export const errors = { fr, en, de };

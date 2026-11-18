@@ -16,14 +16,6 @@ const TRANSITIONS: Record<AdrStatusValue, readonly AdrStatusValue[]> = {
   SUPERSEDED: [],
 };
 
-export const STATUS_LABELS: Record<AdrStatusValue, string> = {
-  PROPOSED: "Proposé",
-  ACCEPTED: "Accepté",
-  REJECTED: "Rejeté",
-  DEPRECATED: "Déprécié",
-  SUPERSEDED: "Remplacé",
-};
-
 export function allowedTransitions(from: AdrStatusValue) {
   return TRANSITIONS[from];
 }

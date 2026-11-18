@@ -10,7 +10,7 @@ export async function listMembers(userId: string, projectId: string) {
   await requireRole(userId, projectId);
   return prisma.membership.findMany({
     where: { projectId },
-    include: { user: { select: { name: true, email: true } } },
+    include: { user: { select: { name: true, email: true, avatar: true } } },
     orderBy: { joinedAt: "asc" },
   });
 }

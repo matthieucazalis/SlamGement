@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getT } from "@/i18n/server";
 import { ForbiddenError } from "@/lib/permissions";
 import { requireUser } from "@/lib/session";
+import { firstIssueMessage } from "@/lib/validators/messages";
 import { inviteSchema, roleSchema } from "@/lib/validators/member";
 import {
   AlreadyMemberError,
@@ -23,9 +25,9 @@ export async function inviteAction(
   _prev: InviteState,
   formData: FormData,
 ): Promise<InviteState> {
-  const user = await requireUser();
+  const [user, t] = await Promise.all([requireUser(), getT()]);
   const parsed = inviteSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  if (!parsed.success) return { error: firstIssueMessage(t, parsed.error) };
 
   try {
     const token = await createInvitation(
@@ -36,10 +38,9 @@ export async function inviteAction(
     );
     return { invitePath: `/invite/${token}` };
   } catch (e) {
-    if (e instanceof ForbiddenError)
-      return { error: "Action réservée aux administrateurs." };
+    if (e instanceof ForbiddenError) return { error: t("errors.adminOnly") };
     if (e instanceof AlreadyMemberError)
-      return { error: "Cette personne est déjà membre du projet." };
+      return { error: t("errors.alreadyMember") };
     throw e;
   }
 }

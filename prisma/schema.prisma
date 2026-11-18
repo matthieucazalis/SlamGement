@@ -26,15 +26,48 @@ enum AdrStatus {
 }
 
 model User {
-  id           String       @id @default(cuid())
-  email        String       @unique
-  name         String
-  passwordHash String
-  createdAt    DateTime     @default(now())
-  memberships  Membership[]
-  adrs         Adr[]
-  auditLogs    AuditLog[]
-  assignedTasks Task[]       @relation("TaskAssignee")
+  id             String               @id @default(cuid())
+  email          String               @unique
+  name           String
+  passwordHash   String
+  createdAt      DateTime             @default(now())
+  locale         String?
+  theme          String?
+  haptics        Boolean              @default(true)
+  avatar         String?
+  deletedAt      DateTime?
+  memberships    Membership[]
+  adrs           Adr[]
+  auditLogs      AuditLog[]
+  assignedTasks  Task[]               @relation("TaskAssignee")
+  passwordResets PasswordResetToken[]
+  apiTokens      ApiToken[]
+  messages       Message[]
+}
+
+model ApiToken {
+  id         String    @id @default(cuid())
+  userId     String
+  tokenHash  String    @unique
+  name       String
+  expiresAt  DateTime
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Project {
@@ -48,6 +81,7 @@ model Project {
   adrs        Adr[]
   auditLogs   AuditLog[]
   tasks       Task[]
+  messages    Message[]
 }
 
 model Membership {
@@ -146,4 +180,16 @@ model RateLimit {
   key         String   @id
   count       Int      @default(0)
   windowStart DateTime @default(now())
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  projectId String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id])
+
+  @@index([projectId, createdAt])
 }

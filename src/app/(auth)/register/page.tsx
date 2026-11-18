@@ -1,8 +1,11 @@
-import type { Metadata } from "next";
+import { getT } from "@/i18n/server";
 import { safeCallbackPath } from "@/lib/safe-redirect";
 import { RegisterForm } from "./register-form";
 
-export const metadata: Metadata = { title: "Inscription" };
+export async function generateMetadata() {
+  const t = await getT();
+  return { title: t("auth.registerTitle") };
+}
 
 export default async function RegisterPage({
   searchParams,

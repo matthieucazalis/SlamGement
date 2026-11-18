@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useT } from "@/i18n/client";
 
 export function ProjectNav({
   projectId,
@@ -10,21 +11,23 @@ export function ProjectNav({
   projectId: string;
   isAdmin: boolean;
 }) {
+  const t = useT();
   const pathname = usePathname();
   const base = `/projects/${projectId}`;
 
   const items = [
-    { href: base, label: "Accueil", exact: true },
-    { href: `${base}/dashboard`, label: "Tableau de bord" },
-    { href: `${base}/adr`, label: "Décisions (ADR)" },
-    { href: `${base}/kanban`, label: "Kanban" },
-    { href: `${base}/members`, label: "Membres" },
-    ...(isAdmin ? [{ href: `${base}/history`, label: "Historique" }] : []),
+    { href: base, label: t("nav.home"), exact: true },
+    { href: `${base}/dashboard`, label: t("nav.dashboard") },
+    { href: `${base}/adr`, label: t("nav.adr") },
+    { href: `${base}/kanban`, label: t("nav.kanban") },
+    { href: `${base}/messages`, label: t("nav.messages") },
+    { href: `${base}/members`, label: t("nav.members") },
+    ...(isAdmin ? [{ href: `${base}/history`, label: t("nav.history") }] : []),
   ];
 
   return (
     <nav
-      aria-label="Navigation du projet"
+      aria-label={t("nav.projectLabel")}
       className="mx-auto max-w-7xl overflow-x-auto px-4 sm:px-8"
     >
       <ul className="flex gap-1 whitespace-nowrap">

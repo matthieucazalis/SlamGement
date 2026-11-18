@@ -2,13 +2,6 @@ export const TASK_STATUSES = ["TODO", "IN_PROGRESS", "REVIEW", "DONE"] as const;
 
 export type TaskStatusValue = (typeof TASK_STATUSES)[number];
 
-export const TASK_STATUS_LABELS: Record<TaskStatusValue, string> = {
-  TODO: "À faire",
-  IN_PROGRESS: "En cours",
-  REVIEW: "Revue",
-  DONE: "Terminé",
-};
-
 export function previousStatus(
   status: TaskStatusValue,
 ): TaskStatusValue | null {

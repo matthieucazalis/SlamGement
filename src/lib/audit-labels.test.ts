@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { createTranslator } from "@/i18n/translate";
 import { describeAudit } from "./audit-labels";
+
+const t = createTranslator("fr");
 
 describe("describeAudit", () => {
   it("décrit un changement de statut", () => {
     expect(
-      describeAudit("ADR_STATUS_CHANGED", {
+      describeAudit(t, "ADR_STATUS_CHANGED", {
         number: 3,
         from: "PROPOSED",
         to: "ACCEPTED",
@@ -14,7 +17,7 @@ describe("describeAudit", () => {
 
   it("mentionne l'ADR remplaçant", () => {
     expect(
-      describeAudit("ADR_STATUS_CHANGED", {
+      describeAudit(t, "ADR_STATUS_CHANGED", {
         number: 3,
         from: "ACCEPTED",
         to: "SUPERSEDED",
@@ -27,7 +30,7 @@ describe("describeAudit", () => {
 
   it("traduit les champs modifiés", () => {
     expect(
-      describeAudit("ADR_UPDATED", {
+      describeAudit(t, "ADR_UPDATED", {
         number: 1,
         fields: ["title", "mermaidCode"],
       }),
@@ -36,7 +39,7 @@ describe("describeAudit", () => {
 
   it("décrit le déplacement d'une tâche", () => {
     expect(
-      describeAudit("TASK_MOVED", {
+      describeAudit(t, "TASK_MOVED", {
         title: "Écrire le MCD",
         from: "TODO",
         to: "IN_PROGRESS",
@@ -45,22 +48,51 @@ describe("describeAudit", () => {
   });
 
   it("décrit la création et la suppression d'une tâche", () => {
-    expect(describeAudit("TASK_CREATED", { title: "Écrire le MCD" })).toBe(
+    expect(describeAudit(t, "TASK_CREATED", { title: "Écrire le MCD" })).toBe(
       "a créé la tâche « Écrire le MCD »",
     );
-    expect(describeAudit("TASK_DELETED", { title: "Écrire le MCD" })).toBe(
+    expect(describeAudit(t, "TASK_DELETED", { title: "Écrire le MCD" })).toBe(
       "a supprimé la tâche « Écrire le MCD »",
     );
   });
 
   it("ne plante pas si les métadonnées sont absentes ou invalides", () => {
-    expect(describeAudit("ADR_CREATED", null)).toBe("a créé un ADR");
-    expect(describeAudit("ADR_CREATED", "n'importe quoi")).toBe(
+    expect(describeAudit(t, "ADR_CREATED", null)).toBe("a créé un ADR");
+    expect(describeAudit(t, "ADR_CREATED", "n'importe quoi")).toBe(
       "a créé un ADR",
     );
   });
 
   it("renvoie le code brut pour une action inconnue", () => {
-    expect(describeAudit("AUTRE", {})).toBe("AUTRE");
+    expect(describeAudit(t, "AUTRE", {})).toBe("AUTRE");
+  });
+});
+
+describe("describeAudit dans les autres langues", () => {
+  const meta = { number: 3, from: "PROPOSED", to: "ACCEPTED" };
+
+  it("décrit un changement de statut en anglais", () => {
+    expect(
+      describeAudit(createTranslator("en"), "ADR_STATUS_CHANGED", meta),
+    ).toBe("moved ADR-0003 from Proposed to Accepted");
+  });
+
+  it("décrit un changement de statut en allemand", () => {
+    expect(
+      describeAudit(createTranslator("de"), "ADR_STATUS_CHANGED", meta),
+    ).toBe("hat ADR-0003 von Vorgeschlagen auf Akzeptiert gesetzt");
+  });
+
+  it("utilise les guillemets de chaque langue", () => {
+    const m = { name: "Atlas" };
+    expect(describeAudit(createTranslator("fr"), "PROJECT_CREATED", m)).toBe(
+      "a créé le projet « Atlas »",
+    );
+    expect(describeAudit(createTranslator("en"), "PROJECT_CREATED", m)).toBe(
+      "created the project “Atlas”",
+    );
+    expect(describeAudit(createTranslator("de"), "PROJECT_CREATED", m)).toBe(
+      "hat das Projekt „Atlas“ erstellt",
+    );
   });
 });

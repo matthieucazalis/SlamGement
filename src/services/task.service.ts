@@ -48,6 +48,7 @@ async function nextPosition(
 
 export type TaskFilters = {
   assigneeId?: string; // identifiant d'un membre, ou "none" pour les non assignées
+  search?: string; // texte cherché dans le titre et la description
 };
 
 export async function listTasks(
@@ -64,10 +65,20 @@ export async function listTasks(
         ? { assigneeId: filters.assigneeId }
         : {};
 
+  const q = filters.search?.trim().slice(0, 100);
+  const searchWhere = q
+    ? {
+        OR: [
+          { title: { contains: q, mode: "insensitive" as const } },
+          { description: { contains: q, mode: "insensitive" as const } },
+        ],
+      }
+    : {};
+
   return prisma.task.findMany({
-    where: { projectId, ...assigneeWhere },
+    where: { projectId, ...assigneeWhere, ...searchWhere },
     include: {
-      assignee: { select: { id: true, name: true } },
+      assignee: { select: { id: true, name: true, avatar: true } },
       adr: { select: { number: true, title: true } },
     },
     orderBy: [{ position: "asc" }, { createdAt: "asc" }],

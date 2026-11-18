@@ -8,11 +8,11 @@ const optionalId = z
   .transform((v) => (v ? v : undefined));
 
 export const taskSchema = z.object({
-  title: z.string().trim().min(2, "2 caractères minimum").max(120),
+  title: z.string().trim().min(2, "validation.min2").max(120),
   description: z
     .string()
     .trim()
-    .max(5000, "5000 caractères maximum")
+    .max(5000, "validation.max5000")
     .optional()
     .transform((v) => (v ? v : undefined)),
   dueDate: z
@@ -21,11 +21,11 @@ export const taskSchema = z.object({
     .optional()
     .transform((v) => (v ? v : undefined))
     .refine((v) => v === undefined || /^\d{4}-\d{2}-\d{2}$/.test(v), {
-      message: "Date invalide",
+      message: "validation.date",
     })
     .transform((v) => (v ? new Date(`${v}T00:00:00.000Z`) : undefined))
     .refine((d) => d === undefined || !Number.isNaN(d.getTime()), {
-      message: "Date invalide",
+      message: "validation.date",
     }),
   assigneeId: optionalId,
   adrId: optionalId,

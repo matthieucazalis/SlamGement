@@ -17,6 +17,10 @@ export const AUDIT_ACTIONS = {
   TASK_UPDATED: "TASK_UPDATED",
   TASK_MOVED: "TASK_MOVED",
   TASK_DELETED: "TASK_DELETED",
+  // actions liées au compte : pas de projet associé
+  ACCOUNT_DELETED: "ACCOUNT_DELETED",
+  ACCOUNT_DATA_EXPORTED: "ACCOUNT_DATA_EXPORTED",
+  PASSWORD_RESET: "PASSWORD_RESET",
 } as const;
 
 type LogInput = {

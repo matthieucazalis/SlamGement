@@ -7,24 +7,35 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PreferencesBar } from "@/components/preferences-bar";
+import { useT } from "@/i18n/client";
 
 export function LoginForm({
   registered,
+  deleted,
+  reset,
   callbackUrl,
 }: {
   registered: boolean;
+  deleted: boolean;
+  reset: boolean;
   callbackUrl?: string;
 }) {
+  const t = useT();
   const [state, action, pending] = useActionState(loginAction, undefined);
   const registerHref = callbackUrl
     ? `/register?callbackUrl=${encodeURIComponent(callbackUrl)}`
     : "/register";
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
+    <main
+      id="main-content"
+      className="flex min-h-screen flex-col items-center justify-center gap-4 p-4"
+    >
+      <PreferencesBar />
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Connexion à SlamGement</CardTitle>
+          <CardTitle>{t("auth.loginTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
           <form action={action} className="space-y-4">
@@ -32,12 +43,31 @@ export function LoginForm({
               <input type="hidden" name="callbackUrl" value={callbackUrl} />
             )}
             {registered && (
-              <p className="text-sm text-green-600" role="status">
-                Compte créé. Tu peux maintenant te connecter.
+              <p
+                className="text-sm text-green-600 dark:text-green-400"
+                role="status"
+              >
+                {t("auth.registered")}
+              </p>
+            )}
+            {reset && (
+              <p
+                className="text-sm text-green-600 dark:text-green-400"
+                role="status"
+              >
+                {t("auth.resetDone")}
+              </p>
+            )}
+            {deleted && (
+              <p
+                className="text-sm text-green-600 dark:text-green-400"
+                role="status"
+              >
+                {t("auth.accountDeleted")}
               </p>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("auth.email")}</Label>
               <Input
                 id="email"
                 name="email"
@@ -47,7 +77,7 @@ export function LoginForm({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
+              <Label htmlFor="password">{t("auth.password")}</Label>
               <Input
                 id="password"
                 name="password"
@@ -56,18 +86,26 @@ export function LoginForm({
                 required
               />
             </div>
+            <p className="text-right text-sm">
+              <Link href="/forgot-password" className="underline">
+                {t("auth.forgotLink")}
+              </Link>
+            </p>
             {state?.error && (
-              <p className="text-sm text-red-600" role="alert">
+              <p
+                className="text-sm text-red-600 dark:text-red-400"
+                role="alert"
+              >
                 {state.error}
               </p>
             )}
             <Button type="submit" className="w-full" disabled={pending}>
-              {pending ? "Connexion..." : "Se connecter"}
+              {pending ? t("auth.loggingIn") : t("auth.login")}
             </Button>
             <p className="text-center text-sm">
-              Pas de compte ?{" "}
+              {t("auth.noAccount")}{" "}
               <Link href={registerHref} className="underline">
-                Créer un compte
+                {t("auth.createAccount")}
               </Link>
             </p>
           </form>

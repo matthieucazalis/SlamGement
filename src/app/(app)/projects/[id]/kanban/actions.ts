@@ -3,9 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { getT } from "@/i18n/server";
+import type { Translator } from "@/i18n/translate";
 import { ForbiddenError } from "@/lib/permissions";
 import { requireUser } from "@/lib/session";
 import { TASK_STATUSES } from "@/lib/task-status";
+import { firstIssueMessage } from "@/lib/validators/messages";
 import { taskSchema } from "@/lib/validators/task";
 import {
   InvalidAdrError,
@@ -20,13 +23,11 @@ import {
 export type TaskFormState =
   { error?: string; values?: Record<string, string> } | undefined;
 
-function serviceError(e: unknown): string | null {
-  if (e instanceof ForbiddenError) return "Accès refusé.";
-  if (e instanceof InvalidAssigneeError)
-    return "Cette personne n'est pas membre du projet.";
-  if (e instanceof TaskNotFoundError) return "Tâche introuvable.";
-  if (e instanceof InvalidAdrError)
-    return "Cet ADR n'existe pas dans ce projet.";
+function serviceError(t: Translator, e: unknown): string | null {
+  if (e instanceof ForbiddenError) return t("errors.forbidden");
+  if (e instanceof InvalidAssigneeError) return t("errors.invalidAssignee");
+  if (e instanceof TaskNotFoundError) return t("errors.taskNotFound");
+  if (e instanceof InvalidAdrError) return t("errors.invalidAdr");
   return null;
 }
 
@@ -35,16 +36,16 @@ export async function createTaskAction(
   _prev: TaskFormState,
   formData: FormData,
 ): Promise<TaskFormState> {
-  const user = await requireUser();
+  const [user, t] = await Promise.all([requireUser(), getT()]);
   const raw = Object.fromEntries(formData) as Record<string, string>;
   const parsed = taskSchema.safeParse(raw);
   if (!parsed.success)
-    return { error: parsed.error.issues[0].message, values: raw };
+    return { error: firstIssueMessage(t, parsed.error), values: raw };
 
   try {
     await createTask(user.id, projectId, parsed.data);
   } catch (e) {
-    const message = serviceError(e);
+    const message = serviceError(t, e);
     if (message) return { error: message, values: raw };
     throw e;
   }
@@ -59,16 +60,16 @@ export async function updateTaskAction(
   _prev: TaskFormState,
   formData: FormData,
 ): Promise<TaskFormState> {
-  const user = await requireUser();
+  const [user, t] = await Promise.all([requireUser(), getT()]);
   const raw = Object.fromEntries(formData) as Record<string, string>;
   const parsed = taskSchema.safeParse(raw);
   if (!parsed.success)
-    return { error: parsed.error.issues[0].message, values: raw };
+    return { error: firstIssueMessage(t, parsed.error), values: raw };
 
   try {
     await updateTask(user.id, projectId, taskId, parsed.data);
   } catch (e) {
-    const message = serviceError(e);
+    const message = serviceError(t, e);
     if (message) return { error: message, values: raw };
     throw e;
   }

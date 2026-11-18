@@ -57,18 +57,61 @@ puis relancer `migrate deploy` comme ci-dessus.
 
 ## 3. Tests unitaires
 
-| Fichier                 | Ce qui est vérifié                                                                                                                                                                                                      | Tests  |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| `adr-status.test.ts`    | Les 5 transitions autorisées ; transitions interdites ; aucun changement vers le même statut ; **les 25 couples de statuts** contre la table ; états finaux ; ADR modifiable seulement en « Proposé »                   | 12     |
-| `adr-markdown.test.ts`  | Nom de fichier (accents, ponctuation, numéro sur 4 chiffres) ; contenu de l'export ; sections facultatives omises ; bloc Mermaid ; clôture allongée si le code contient déjà des accents graves ; liens de remplacement | 9      |
-| `audit-labels.test.ts`  | Phrases d'historique (changement de statut, remplacement, champs modifiés, tâches) ; **métadonnées absentes ou invalides sans plantage** ; action inconnue                                                              | 7      |
-| `task-status.test.ts`   | Avancer et reculer entre colonnes ; bornes ; tâche en retard (échéance passée, jour même, future, terminée, sans échéance)                                                                                              | 8      |
-| `rate-limit.test.ts`    | Fenêtre de 15 minutes active ou expirée ; seuil atteint ; normalisation de l'adresse IP (liste, IPv6, valeur invalide)                                                                                                  | 6      |
-| `format.test.ts`        | Minuit à l'heure de Paris en hiver et en été, passage à l'heure d'été, date de fin incluse, dates invalides ; affichage en heure de Paris quel que soit le fuseau du serveur                                            |        |
-| `safe-redirect.test.ts` | Redirection après connexion : chemin interne accepté, URL absolue réduite à son chemin, `//site`, `\\site` et `javascript:` refusés, pas de boucle vers `/login`                                                        |        |
-| **Total**               |                                                                                                                                                                                                                         | **53** |
+| Fichier                 | Ce qui est vérifié                                                                                                                                                                                                                                        | Tests  |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| `adr-status.test.ts`    | Les 5 transitions autorisées ; transitions interdites ; aucun changement vers le même statut ; **les 25 couples de statuts** contre la table ; états finaux ; ADR modifiable seulement en « Proposé »                                                     | 12     |
+| `adr-markdown.test.ts`  | Nom de fichier (accents, ponctuation, numéro sur 4 chiffres) ; contenu de l'export ; sections facultatives omises ; bloc Mermaid ; clôture allongée si le code contient déjà des accents graves ; liens de remplacement                                   | 9      |
+| `audit-labels.test.ts`  | Phrases d'historique (changement de statut, remplacement, champs modifiés, tâches) ; **métadonnées absentes ou invalides sans plantage** ; action inconnue                                                                                                | 7      |
+| `task-status.test.ts`   | Avancer et reculer entre colonnes ; bornes ; tâche en retard (échéance passée, jour même, future, terminée, sans échéance)                                                                                                                                | 8      |
+| `rate-limit.test.ts`    | Fenêtre de 15 minutes active ou expirée ; seuil atteint ; normalisation de l'adresse IP (liste, IPv6, valeur invalide)                                                                                                                                    | 6      |
+| `format.test.ts`        | Minuit à l'heure de Paris en hiver et en été, passage à l'heure d'été, date de fin incluse, dates invalides ; affichage en heure de Paris quel que soit le fuseau du serveur                                                                              |        |
+| `safe-redirect.test.ts` | Redirection après connexion : chemin interne accepté, URL absolue réduite à son chemin, `//site`, `\\site` et `javascript:` refusés, pas de boucle vers `/login`                                                                                          |        |
+| `i18n.test.ts`          | **Dictionnaires** : mêmes clés, mêmes variables `{…}` et mêmes pluriels en FR, EN et DE, aucune traduction vide ; pluriels (0 et 1 au singulier en français) ; choix de la langue (`Accept-Language`, poids `q`, repli) ; messages de validation traduits |
+| `avatar.test.ts`        | Photo de profil : JPEG/PNG/WebP acceptés ; SVG, HTML, URL externe refusés ; **signature binaire** différente du type annoncé refusée ; image trop grande refusée                                                                                          |
+| `openapi.test.ts`       | Description de l'API : schémas référencés existants, chaque chemin décrit a un fichier `route.ts`                                                                                                                                                         |
+| **Total**               |                                                                                                                                                                                                                                                           | **87** |
 
-Dernière exécution : [à compléter : date, nombre de tests, durée].
+Dernière exécution : [à compléter : date, 87 tests, durée].
+
+### 3 bis. Tests d'intégration (vraie base PostgreSQL)
+
+Les services tournent contre une **vraie base** : c'est là que se vérifient les règles qui dépendent de la
+concurrence et des transactions. Commande : `npm run test:integration` avec `DATABASE_URL` pointant vers une
+base dont le nom se termine par `_test` (**garde-fou** : les tests refusent de tourner sinon, pour ne jamais
+toucher aux données de développement).
+
+| Fichier                     | Ce qui est vérifié                                                                                                                                                                                                                                                                                                                                                                       |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `adr.test.ts` (7)           | Numérotation sans doublon sous 6 créations simultanées ; **numéro jamais réattribué** après suppression ; non-membre refusé ; remplacement par un ADR rejeté ou déjà remplacé refusé ; transition interdite ; recherche insensible à la casse sans joker `%` ; historique enregistré                                                                                                     |
+| `members-tasks.test.ts` (4) | Un membre ne peut ni inviter ni changer un rôle ; le **dernier administrateur** ne peut pas partir ; retirer un membre **désassigne** ses tâches ; recherche de tâches                                                                                                                                                                                                                   |
+| `auth.test.ts` (13)         | **12 échecs de connexion simultanés comptés exactement** ; purge des compteurs, jetons et invitations expirés ; **inscriptions simultanées** (une seule réussit) ; réinitialisation : jeton stocké haché, usage unique (aussi sous concurrence), expiré, inventé, un seul valable à la fois, limite de demandes, aucune fuite sur les comptes inconnus, déblocage d'un compte verrouillé |
+| `account.test.ts` (4)       | Export sans mot de passe ; mauvais mot de passe refusé ; **anonymisation** (décisions gardées, projets solo supprimés, tâches désassignées, connexion impossible) ; dernier administrateur protégé                                                                                                                                                                                       |
+
+| `api.test.ts` (14) | **API mobile** : connexion par jeton (stocké haché), même réponse pour mauvais mot de passe et email inconnu, blocage après échecs, corps invalide ou trop gros ; limite de 10 jetons ; jeton inventé, **expiré**, **révoqué**, compte supprimé refusés ; déplacement de carte tracé ; non-membre → 404 ; création d'ADR (201, 422 avec `fields`) ; transition interdite → 409 ; photo valide / fausse |
+
+Total : **42 tests**, durée ≈ 12 s.
+
+### 3 bis bis. Messagerie : couverture à ajouter
+
+Le module de messagerie (`message.service.ts`, route `/api/v1/projects/{id}/messages`) n'a pas encore de test dédié. À écrire :
+
+- `messageSchema` (unitaire) : vide, 2000 / 2001 caractères, caractères interdits, réduction des sauts de ligne.
+- Intégration : un non-membre est refusé ; le 51e message supprime le plus ancien ; le quota (15/min) déclenche `MessageRateLimitError` ; un auteur anonymisé reste affiché.
+- e2e : envoyer un message et le voir dans la liste.
+
+Totaux à revérifier : ce document annonce 42 tests d'intégration dont `api.test.ts` (14), mais ce fichier est absent de l'archive du 17/11 (4 fichiers, 28 tests). Relancer `npm test` et `npm run test:integration`, puis corriger les totaux.
+
+### 3 ter. Tests de l'application mobile (`mobile/`)
+
+| Fichier               | Ce qui est vérifié                                                                                                                                                                                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api/client.test.ts`  | Jeton dans l'en-tête, corps JSON, réponse 204 ; **chaque code HTTP → erreur typée** ; champs invalides transmis ; panne réseau ; **délai dépassé** ; réponse non JSON ; construction des URL (recherche et identifiants encodés)                                          |
+| `api/adresse.test.ts` | Adresse du serveur saisie : `http://` ajouté, « / » finaux et chemin retirés, saisies invalides refusées                                                                                                                                                                  |
+| `data/regles.test.ts` | Transitions d'ADR identiques au site, colonnes du Kanban, tâche en retard, numéros d'ADR (texte de l'URL → nombre), minimums de saisie                                                                                                                                    |
+| `i18n/i18n.test.ts`   | Mêmes clés et mêmes variables en FR, EN et DE ; codes d'erreur de l'API tous traduits ; langue de l'appareil                                                                                                                                                              |
+| `api/contrat.test.ts` | **Le vrai client contre le vrai serveur** : connexion, lecture, recherche, création d'ADR invalide puis valide, transition autorisée puis refusée, déplacement Kanban, photo valide puis faux fichier, déconnexion et **révocation du jeton**. Ignoré sans `SLAM_API_URL` |
+
+Total : **52 tests** (51 + le test de contrat). Vérifications supplémentaires : `tsc`, `expo lint`, génération des bundles Android, iOS et web avec Metro, `expo-doctor` (18 contrôles sur 20 ; les 2 autres exigent l'accès aux serveurs d'Expo).
 
 ## 4. Tests de bout en bout
 
@@ -96,7 +139,20 @@ Dernière exécution : [à compléter : date, nombre de tests, durée].
 | 20  | `responsive.spec.ts` | Toutes les pages d'un projet à 375 px, ADR avec schéma large compris                       | Responsive                        | —              |
 | 21  | `responsive.spec.ts` | La navigation du projet est utilisable au téléphone                                        | Responsive                        | —              |
 
-Dernière exécution : [à compléter : date, 21 tests, durée].
+| 22 | `settings.spec.ts` | La langue (FR → EN → DE) change toute l'interface et reste après rechargement | Internationalisation |
+| 23 | `settings.spec.ts` | Le mode sombre s'applique, persiste et se désactive | Thème |
+| 24 | `settings.spec.ts` | Les préférences suivent le compte sur un autre navigateur | Préférences sur le compte |
+| 25 | `settings.spec.ts` | Changement de langue avant connexion | Internationalisation |
+| 26 | `profile.spec.ts` | Photo choisie dans la galerie : enregistrée, visible, supprimable | Fonction « téléphone » |
+| 27 | `profile.spec.ts` | Un faux fichier image est refusé sans planter | Entrée non fiable |
+| 28 | `profile.spec.ts` | Export RGPD : téléchargement d'un JSON | Portabilité |
+| 29 | `profile.spec.ts` | Suppression de compte : mot de passe exigé, puis connexion impossible | Droit à l'effacement |
+| 30 | `profile.spec.ts` | Mot de passe oublié : même réponse quel que soit l'email | Énumération de comptes |
+| 31 | `profile.spec.ts` | Lien de réinitialisation invalide signalé | Jeton invalide |
+| 32 | `api.spec.ts` | API sans session : 401 JSON | Accès sans session |
+| 33 | `api.spec.ts` | API : projets et ADR d'un membre ; projet d'autrui en 404 ; OpenAPI disponible | Contrôle d'accès |
+
+Dernière exécution : [à compléter : date, 33 tests, durée]. **Première exécution : 24 réussis sur 33** ; les 9 échecs venaient des tests (URL avec `?created=1`, connexion non attendue, sélecteur d'étiquette traduite) et sont corrigés (voir `docs/RAPPORT_AMELIORATIONS.md`, dernière section).
 
 ## 5. Tests manuels
 

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getT } from "@/i18n/server";
+import { displayName } from "@/lib/labels";
 import { ForbiddenError } from "@/lib/permissions";
 import { requireUser } from "@/lib/session";
 import { listAdrs } from "@/services/adr.service";
@@ -15,7 +17,7 @@ export default async function EditTaskPage({
   params: Promise<{ id: string; taskId: string }>;
 }) {
   const { id, taskId } = await params;
-  const user = await requireUser();
+  const [user, t] = await Promise.all([requireUser(), getT()]);
 
   let task;
   let members;
@@ -31,15 +33,18 @@ export default async function EditTaskPage({
   }
 
   return (
-    <main className="mx-auto max-w-xl space-y-6 p-4 sm:p-8">
+    <main id="main-content" className="mx-auto max-w-xl space-y-6 p-4 sm:p-8">
       <Link href={`/projects/${id}/kanban`} className="text-sm underline">
-        ← Tableau Kanban
+        {t("kanban.backTo")}
       </Link>
-      <h1 className="text-2xl font-bold">Modifier la tâche</h1>
+      <h1 className="text-2xl font-bold">{t("kanban.editTitle")}</h1>
 
       <TaskForm
         action={updateTaskAction.bind(null, id, task.id)}
-        members={members.map((m) => ({ id: m.userId, name: m.user.name }))}
+        members={members.map((m) => ({
+          id: m.userId,
+          name: displayName(t, m.user.name),
+        }))}
         adrs={adrs.map((a) => ({ id: a.id, number: a.number, title: a.title }))}
         initial={{
           title: task.title,
@@ -48,21 +53,28 @@ export default async function EditTaskPage({
           assigneeId: task.assigneeId ?? "",
           adrId: task.adrId ?? "",
         }}
-        submitLabel="Enregistrer"
+        submitLabel={t("kanban.save")}
       />
 
-      <section className="space-y-3 rounded-lg border border-red-300 p-4">
-        <h2 className="font-semibold text-red-600">Zone dangereuse</h2>
+      <section className="space-y-3 rounded-lg border border-red-300 p-4 dark:border-red-800">
+        <h2 className="font-semibold text-red-600 dark:text-red-400">
+          {t("kanban.dangerTitle")}
+        </h2>
         <form
           action={deleteTaskAction.bind(null, id, task.id)}
           className="space-y-3"
         >
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="confirm" required />
-            Je confirme vouloir supprimer cette tâche
+            {t("kanban.confirmDelete")}
           </label>
-          <Button type="submit" variant="destructive" size="sm">
-            Supprimer la tâche
+          <Button
+            type="submit"
+            variant="destructive"
+            size="sm"
+            data-haptic="error"
+          >
+            {t("kanban.deleteButton")}
           </Button>
         </form>
       </section>

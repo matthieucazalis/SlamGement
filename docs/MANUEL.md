@@ -120,7 +120,7 @@ facultative) et clique sur **Créer le projet**. Tu en deviens
 ### Naviguer dans un projet
 
 Une barre de navigation en haut de chaque page du projet donne accès à :
-**Accueil**, **Tableau de bord**, **Décisions (ADR)**, **Kanban**, **Membres**
+**Accueil**, **Tableau de bord**, **Décisions (ADR)**, **Kanban**, **Messagerie**, **Membres**
 et, pour les administrateurs, **Historique**. Sur téléphone, elle défile
 horizontalement.
 
@@ -253,6 +253,15 @@ suivante →**. Il n'y a pas de bouton au-delà de la première et de la derniè
 Choisis un **membre** (ou **Non assignées**) et/ou une **colonne**, puis **Filtrer**.
 L'adresse de la page contient le filtre : tu peux la partager ou la recharger.
 
+## 6 bis. La messagerie
+
+L'onglet **Messagerie** ouvre la discussion du projet, visible par tous ses membres.
+
+- Écris ton message puis **Entrée** pour envoyer (**Maj+Entrée** pour un saut de ligne). 2000 caractères maximum, texte brut : le Markdown et le HTML ne sont pas interprétés.
+- La page se met à jour toute seule toutes les 8 secondes quand l'onglet est visible.
+- Seuls les **50 derniers messages** sont conservés : les nouveaux remplacent les plus anciens. Pour garder une décision, écris un ADR.
+- L'envoi est limité (15 messages par minute). Les messages ne sont pas modifiables et ne figurent pas dans l'historique.
+
 ## 7. Suivre l'avancement
 
 ### Le tableau de bord
@@ -275,20 +284,35 @@ enregistrées ensemble : il n'existe pas de modification sans trace.
 
 ![Historique](images/10-historique.png)
 
-## 8. Problèmes fréquents
+## 8. Paramètres, profil et données personnelles
 
-| Situation                                              | Explication et solution                                                                       |
-| ------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
-| « Trop de tentatives » à la connexion                  | 5 échecs ont été comptés. Attends 15 minutes                                                  |
-| J'ai oublié mon mot de passe                           | La réinitialisation n'existe pas encore. Contacte la personne qui administre le site          |
-| Le lien d'invitation est « invalide ou expiré »        | Il a déjà servi, ou date de plus de 7 jours. Demande-en un nouveau à un administrateur        |
-| « Cette invitation est destinée à… »                   | Tu es connecté avec un autre compte. Déconnecte-toi et utilise l'adresse invitée              |
-| Je ne peux plus modifier mon ADR                       | Il n'est plus au statut Proposé. Écris un nouvel ADR qui le remplace                          |
-| Je ne peux pas quitter le projet                       | Tu en es le dernier administrateur. Nomme-en un autre d'abord                                 |
-| Je n'ai pas le formulaire d'invitation ni l'historique | Ces fonctions sont réservées aux administrateurs                                              |
-| La page d'un projet affiche « 404 »                    | Le projet n'existe pas, ou tu n'en es pas membre (les deux cas se ressemblent volontairement) |
-| Un schéma ne s'affiche pas                             | Le code Mermaid est invalide : le message sous l'aperçu indique la ligne en cause             |
-| « Tu es hors ligne »                                   | Reconnecte-toi à Internet puis clique sur **Réessayer**                                       |
+- **Paramètres** : langue (Français, English, Deutsch), apparence (Clair, Sombre, Système) et retour haptique
+  (vibration sur téléphone Android lors des actions importantes). Les choix sont enregistrés sur ton compte.
+  La langue et le thème se changent aussi depuis la barre du haut, même avant la connexion.
+- **Profil** : photo (appareil photo ou galerie, réduite automatiquement), nom, mot de passe.
+- **Mes données** : téléchargement de toutes tes données en JSON, ou suppression du compte.
+
+## 9. Problèmes fréquents
+
+| Situation                                              | Explication et solution                                                                                         |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| « Trop de tentatives » à la connexion                  | 5 échecs ont été comptés. Attends 15 minutes                                                                    |
+| J'ai oublié mon mot de passe                           | Sur la page de connexion, clique sur **Mot de passe oublié ?** : un lien valable 1 heure t'est envoyé           |
+| Je ne reçois pas l'e-mail de réinitialisation          | Vérifie les courriers indésirables. Après 3 demandes en 15 minutes, patiente avant de réessayer                 |
+| Je veux changer la langue ou passer en mode sombre     | Menu **Paramètres** (ou les raccourcis en haut à droite) : français, anglais, allemand ; clair, sombre, système |
+| Je veux changer ma photo                               | **Mon profil** → **Appareil photo** (sur téléphone) ou **Galerie**                                              |
+| Je veux récupérer mes données ou supprimer mon compte  | **Mon profil** → **Mes données** : export JSON, ou suppression définitive (mot de passe demandé)                |
+| J'ai fermé la page en rédigeant un ADR                 | Un brouillon est gardé sur l'appareil : rouvre **Nouvel ADR**, il est restauré                                  |
+| Je ne peux pas supprimer mon compte                    | Tu es le dernier administrateur d'un projet partagé : nomme un autre administrateur d'abord                     |
+| Le lien d'invitation est « invalide ou expiré »        | Il a déjà servi, ou date de plus de 7 jours. Demande-en un nouveau à un administrateur                          |
+| « Cette invitation est destinée à… »                   | Tu es connecté avec un autre compte. Déconnecte-toi et utilise l'adresse invitée                                |
+| Je ne peux plus modifier mon ADR                       | Il n'est plus au statut Proposé. Écris un nouvel ADR qui le remplace                                            |
+| Je ne peux pas quitter le projet                       | Tu en es le dernier administrateur. Nomme-en un autre d'abord                                                   |
+| Je n'ai pas le formulaire d'invitation ni l'historique | Ces fonctions sont réservées aux administrateurs                                                                |
+| La page d'un projet affiche « 404 »                    | Le projet n'existe pas, ou tu n'en es pas membre (les deux cas se ressemblent volontairement)                   |
+| Un message ne part pas                                 | Trop de messages en peu de temps, texte vide ou trop long : attends une minute                                  |
+| Un schéma ne s'affiche pas                             | Le code Mermaid est invalide : le message sous l'aperçu indique la ligne en cause                               |
+| « Tu es hors ligne »                                   | Reconnecte-toi à Internet puis clique sur **Réessayer**                                                         |
 
 ## Annexe : captures d'écran à prendre
 

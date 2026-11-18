@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import {
   createAdr,
   createProject,
-  login,
+  loginAndWait,
   register,
   signUpAndLogin,
   uniqueEmail,
@@ -76,7 +76,7 @@ test.describe("contrôle d'accès", () => {
     const inviteLink = await page.locator("input[readonly]").inputValue();
     expect(inviteLink).toContain("/invite/");
 
-    await login(pageB, emailB);
+    await loginAndWait(pageB, emailB);
     await pageB.goto(inviteLink);
     await pageB.getByRole("button", { name: "Rejoindre le projet" }).click();
     await pageB.waitForURL(new RegExp(`${projectPath}$`));

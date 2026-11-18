@@ -1,12 +1,14 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import type { AdrFormState } from "./actions";
 import { Markdown } from "@/components/markdown";
 import { MermaidDiagram } from "@/components/mermaid-diagram";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/i18n/client";
+import { useStorage } from "@/hooks/use-storage";
 
 type Values = {
   title: string;
@@ -16,6 +18,24 @@ type Values = {
   alternatives: string;
   mermaidCode: string;
 };
+
+const EMPTY: Values = {
+  title: "",
+  context: "",
+  decision: "",
+  consequences: "",
+  alternatives: "",
+  mermaidCode: "",
+};
+
+// Le brouillon vient du stockage local : on ne fait pas confiance à son contenu
+function isValues(value: unknown): value is Values {
+  if (!value || typeof value !== "object") return false;
+  const o = value as Record<string, unknown>;
+  return (Object.keys(EMPTY) as (keyof Values)[]).every(
+    (k) => typeof o[k] === "string",
+  );
+}
 
 const TEXTAREA_CLASS =
   "min-h-28 w-full rounded-md border bg-transparent px-3 py-2 text-sm";
@@ -56,20 +76,27 @@ export function AdrForm({
   action,
   initial = {},
   submitLabel,
+  draftKey,
 }: {
   action: (state: AdrFormState, formData: FormData) => Promise<AdrFormState>;
   initial?: Partial<Values>;
   submitLabel: string;
+  // si fourni, le formulaire est enregistré sur l'appareil au fil de la saisie
+  draftKey?: string;
 }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(action, undefined);
-  const [v, setV] = useState<Values>({
-    title: initial.title ?? "",
-    context: initial.context ?? "",
-    decision: initial.decision ?? "",
-    consequences: initial.consequences ?? "",
-    alternatives: initial.alternatives ?? "",
-    mermaidCode: initial.mermaidCode ?? "",
-  });
+  const {
+    value: v,
+    setValue: setV,
+    reset: discardDraft,
+    restored,
+  } = useStorage<Values>(
+    draftKey ?? "adr-draft:unused",
+    { ...EMPTY, ...initial },
+    isValues,
+    draftKey !== undefined,
+  );
 
   const bind =
     (key: keyof Values) =>
@@ -79,7 +106,24 @@ export function AdrForm({
   return (
     <div className="grid gap-8 lg:grid-cols-2">
       <form action={formAction} className="space-y-5">
-        <Field id="title" label="Titre">
+        {draftKey && restored && (
+          <p
+            className="flex flex-wrap items-center gap-3 rounded-md bg-muted p-2 text-sm"
+            role="status"
+          >
+            {t("adr.form.draftRestored")}
+            <button
+              type="button"
+              className="underline"
+              onClick={() => {
+                discardDraft();
+              }}
+            >
+              {t("adr.form.draftDiscard")}
+            </button>
+          </p>
+        )}
+        <Field id="title" label={t("adr.form.title")}>
           <Input
             id="title"
             name="title"
@@ -91,8 +135,8 @@ export function AdrForm({
 
         <Field
           id="context"
-          label="Contexte"
-          hint="Quel problème, quelles contraintes ? Markdown accepté."
+          label={t("adr.form.context")}
+          hint={t("adr.form.contextHint")}
         >
           <textarea
             id="context"
@@ -106,8 +150,8 @@ export function AdrForm({
 
         <Field
           id="decision"
-          label="Décision"
-          hint="Qu'est-ce qui est décidé, et pourquoi ?"
+          label={t("adr.form.decision")}
+          hint={t("adr.form.decisionHint")}
         >
           <textarea
             id="decision"
@@ -121,8 +165,8 @@ export function AdrForm({
 
         <Field
           id="consequences"
-          label="Conséquences"
-          hint="Ce que la décision change, en bien comme en mal."
+          label={t("adr.form.consequences")}
+          hint={t("adr.form.consequencesHint")}
         >
           <textarea
             id="consequences"
@@ -134,7 +178,7 @@ export function AdrForm({
           />
         </Field>
 
-        <Field id="alternatives" label="Alternatives étudiées (facultatif)">
+        <Field id="alternatives" label={t("adr.form.alternatives")}>
           <textarea
             id="alternatives"
             name="alternatives"
@@ -146,8 +190,8 @@ export function AdrForm({
 
         <Field
           id="mermaidCode"
-          label="Schéma Mermaid (facultatif)"
-          hint="Exemple : graph TD; A[Client] --> B[API]; B --> C[(Base)]"
+          label={t("adr.form.mermaid")}
+          hint={t("adr.form.mermaidHint")}
         >
           <textarea
             id="mermaidCode"
@@ -159,32 +203,40 @@ export function AdrForm({
         </Field>
 
         {state?.error && (
-          <p className="text-sm text-red-600" role="alert">
+          <p className="text-sm text-red-600 dark:text-red-400" role="alert">
             {state.error}
           </p>
         )}
 
         <Button type="submit" disabled={pending}>
-          {pending ? "Enregistrement..." : submitLabel}
+          {pending ? t("adr.form.saving") : submitLabel}
         </Button>
       </form>
 
       <aside
-        aria-label="Aperçu"
+        aria-label={t("adr.form.preview")}
         className="space-y-4 rounded-lg border p-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-y-auto"
       >
         <p className="text-xs font-semibold uppercase text-muted-foreground">
-          Aperçu
+          {t("adr.form.preview")}
         </p>
-        <h3 className="text-xl font-bold">{v.title || "Titre de l'ADR"}</h3>
-        <PreviewSection title="Contexte" text={v.context} />
-        <PreviewSection title="Décision" text={v.decision} />
-        <PreviewSection title="Conséquences" text={v.consequences} />
-        <PreviewSection title="Alternatives" text={v.alternatives} />
+        <h3 className="text-xl font-bold">
+          {v.title || t("adr.form.previewPlaceholder")}
+        </h3>
+        <PreviewSection title={t("adr.sectionContext")} text={v.context} />
+        <PreviewSection title={t("adr.sectionDecision")} text={v.decision} />
+        <PreviewSection
+          title={t("adr.sectionConsequences")}
+          text={v.consequences}
+        />
+        <PreviewSection
+          title={t("adr.sectionAlternatives")}
+          text={v.alternatives}
+        />
         {v.mermaidCode.trim() && (
           <section className="space-y-1">
             <h4 className="text-sm font-semibold uppercase text-muted-foreground">
-              Schéma
+              {t("adr.sectionDiagram")}
             </h4>
             <MermaidDiagram code={v.mermaidCode} />
           </section>

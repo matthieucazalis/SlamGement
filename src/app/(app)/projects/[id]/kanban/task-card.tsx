@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { Markdown } from "@/components/markdown";
 import { Button } from "@/components/ui/button";
+import { UserAvatar } from "@/components/user-avatar";
+import { getLocale, getT } from "@/i18n/server";
 import { formatAdrNumber } from "@/lib/adr-format";
+import { formatDueDate } from "@/lib/format";
+import { displayName, taskStatusLabel } from "@/lib/labels";
 import {
-  TASK_STATUS_LABELS,
   isOverdue,
   nextStatus,
   previousStatus,
@@ -14,13 +17,14 @@ import { moveTaskAction } from "./actions";
 
 type Task = Awaited<ReturnType<typeof listTasks>>[number];
 
-export function TaskCard({
+export async function TaskCard({
   projectId,
   task,
 }: {
   projectId: string;
   task: Task;
 }) {
+  const [t, locale] = await Promise.all([getT(), getLocale()]);
   const prev = previousStatus(task.status);
   const next = nextStatus(task.status);
   const overdue = isOverdue(task.dueDate, task.status);
@@ -35,14 +39,14 @@ export function TaskCard({
           href={`/projects/${projectId}/kanban/${task.id}`}
           className="shrink-0 text-xs underline"
         >
-          Modifier
+          {t("kanban.edit")}
         </Link>
       </div>
 
       {task.description && (
         <details>
           <summary className="cursor-pointer text-xs text-muted-foreground">
-            Description
+            {t("kanban.description")}
           </summary>
           <div className="mt-2">
             <Markdown>{task.description}</Markdown>
@@ -52,18 +56,27 @@ export function TaskCard({
 
       <div className="flex flex-wrap items-center gap-2 text-xs">
         {task.assignee ? (
-          <span className="rounded-full bg-muted px-2 py-0.5">
-            {task.assignee.name}
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-muted py-0.5 pl-0.5 pr-2">
+            <UserAvatar
+              name={displayName(t, task.assignee.name)}
+              src={task.assignee.avatar}
+              size={18}
+            />
+            {displayName(t, task.assignee.name)}
           </span>
         ) : (
-          <span className="text-muted-foreground">Non assignée</span>
+          <span className="text-muted-foreground">
+            {t("kanban.unassigned")}
+          </span>
         )}
         {task.dueDate && (
-          <span className={overdue ? "font-medium text-red-600" : ""}>
-            Échéance{" "}
-            {/* date stockée à minuit UTC : on l'affiche en UTC, sinon décalage d'un jour */}
-            {task.dueDate.toLocaleDateString("fr-FR", { timeZone: "UTC" })}
-            {overdue && " (en retard)"}
+          <span
+            className={
+              overdue ? "font-medium text-red-600 dark:text-red-400" : ""
+            }
+          >
+            {t("kanban.due", { date: formatDueDate(task.dueDate, locale) })}
+            {overdue && ` ${t("kanban.overdue")}`}
           </span>
         )}
       </div>
@@ -86,9 +99,12 @@ export function TaskCard({
               type="submit"
               variant="outline"
               size="sm"
-              aria-label={`Déplacer vers ${TASK_STATUS_LABELS[prev]}`}
+              data-haptic="light"
+              aria-label={t("kanban.moveTo", {
+                status: taskStatusLabel(t, prev),
+              })}
             >
-              ← {TASK_STATUS_LABELS[prev]}
+              ← {taskStatusLabel(t, prev)}
             </Button>
           </form>
         ) : (
@@ -100,9 +116,12 @@ export function TaskCard({
               type="submit"
               variant="outline"
               size="sm"
-              aria-label={`Déplacer vers ${TASK_STATUS_LABELS[next]}`}
+              data-haptic="light"
+              aria-label={t("kanban.moveTo", {
+                status: taskStatusLabel(t, next),
+              })}
             >
-              {TASK_STATUS_LABELS[next]} →
+              {taskStatusLabel(t, next)} →
             </Button>
           </form>
         ) : (

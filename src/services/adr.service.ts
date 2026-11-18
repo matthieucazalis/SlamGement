@@ -18,10 +18,26 @@ export async function listAdrs(
   userId: string,
   projectId: string,
   status?: AdrStatusValue,
+  search?: string,
 ) {
   await requireRole(userId, projectId);
+  const q = search?.trim().slice(0, 100);
   return prisma.adr.findMany({
-    where: { projectId, ...(status ? { status } : {}) },
+    where: {
+      projectId,
+      ...(status ? { status } : {}),
+      // Prisma échappe les caractères joker (% et _) dans « contains »
+      ...(q
+        ? {
+            OR: [
+              { title: { contains: q, mode: "insensitive" as const } },
+              { context: { contains: q, mode: "insensitive" as const } },
+              { decision: { contains: q, mode: "insensitive" as const } },
+              { consequences: { contains: q, mode: "insensitive" as const } },
+            ],
+          }
+        : {}),
+    },
     include: { author: { select: { name: true } } },
     orderBy: { number: "desc" },
   });

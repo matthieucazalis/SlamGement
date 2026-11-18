@@ -1,34 +1,30 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
+import { getT } from "@/i18n/server";
+import { taskStatusLabel } from "@/lib/labels";
 import { ForbiddenError } from "@/lib/permissions";
 import { requireUser } from "@/lib/session";
-import {
-  TASK_STATUSES,
-  TASK_STATUS_LABELS,
-  type TaskStatusValue,
-} from "@/lib/task-status";
+import { TASK_STATUSES, type TaskStatusValue } from "@/lib/task-status";
+import { displayName } from "@/lib/labels";
 import { listAdrs } from "@/services/adr.service";
 import { listMembers } from "@/services/member.service";
 import { getProjectForUser } from "@/services/project.service";
 import { listTasks } from "@/services/task.service";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { createTaskAction } from "./actions";
 import { TaskCard } from "./task-card";
 import { TaskForm } from "./task-form";
 
 type TaskList = Awaited<ReturnType<typeof listTasks>>;
 
-const ERRORS: Record<string, string> = {
-  forbidden: "Action non autorisée.",
-  invalid: "Données invalides.",
-};
-
 // Les paramètres d'URL sont de l'entrée utilisateur : une valeur
 // invalide est simplement ignorée.
 const querySchema = z.object({
   assignee: z.string().max(40).optional().catch(undefined),
   status: z.enum(TASK_STATUSES).optional().catch(undefined),
+  q: z.string().trim().max(100).optional().catch(undefined),
   error: z.string().max(20).optional().catch(undefined),
 });
 
@@ -43,7 +39,7 @@ export default async function KanbanPage({
 }) {
   const { id } = await params;
   const q = querySchema.parse(await searchParams);
-  const user = await requireUser();
+  const [user, t] = await Promise.all([requireUser(), getT()]);
 
   let project;
   let members;
@@ -53,7 +49,10 @@ export default async function KanbanPage({
     ({ project } = await getProjectForUser(user.id, id));
     members = await listMembers(user.id, id);
     adrs = await listAdrs(user.id, id);
-    tasks = await listTasks(user.id, id, { assigneeId: q.assignee });
+    tasks = await listTasks(user.id, id, {
+      assigneeId: q.assignee,
+      search: q.q,
+    });
   } catch (e) {
     if (e instanceof ForbiddenError) notFound();
     throw e;
@@ -67,51 +66,71 @@ export default async function KanbanPage({
   const visibleColumns = q.status ? [q.status] : TASK_STATUSES;
   const memberOptions = members.map((m) => ({
     id: m.userId,
-    name: m.user.name,
+    name: displayName(t, m.user.name),
   }));
   const adrOptions = adrs.map((a) => ({
     id: a.id,
     number: a.number,
     title: a.title,
   }));
+  const errorMessage =
+    q.error === "forbidden"
+      ? t("kanban.errorForbidden")
+      : q.error === "invalid"
+        ? t("kanban.errorInvalid")
+        : null;
 
   return (
-    <main className="mx-auto max-w-7xl space-y-6 p-4 sm:p-8">
+    <main id="main-content" className="mx-auto max-w-7xl space-y-6 p-4 sm:p-8">
       <Link href={`/projects/${id}`} className="text-sm underline">
         ← {project.name}
       </Link>
-      <h1 className="text-2xl font-bold">Tableau Kanban</h1>
+      <h1 className="text-2xl font-bold">{t("kanban.title")}</h1>
 
-      {q.error && ERRORS[q.error] && (
+      {errorMessage && (
         <p
-          className="rounded-md border border-red-300 p-3 text-sm text-red-600"
+          className="rounded-md border border-red-300 p-3 text-sm text-red-600 dark:border-red-800 dark:text-red-400"
           role="alert"
         >
-          {ERRORS[q.error]}
+          {errorMessage}
         </p>
       )}
 
       <details className="rounded-lg border p-4">
         <summary className="cursor-pointer font-semibold">
-          Nouvelle tâche
+          {t("kanban.newTask")}
         </summary>
         <div className="mt-4 max-w-xl">
           <TaskForm
             action={createTaskAction.bind(null, id)}
             members={memberOptions}
             adrs={adrOptions}
-            submitLabel="Ajouter la tâche"
+            submitLabel={t("kanban.addTask")}
           />
         </div>
       </details>
 
       <form
         method="get"
+        role="search"
         className="grid items-end gap-3 rounded-lg border p-4 sm:grid-cols-2 lg:grid-cols-4"
       >
         <div className="space-y-1">
+          <label htmlFor="q" className="text-xs">
+            {t("kanban.searchLabel")}
+          </label>
+          <Input
+            id="q"
+            name="q"
+            type="search"
+            defaultValue={q.q ?? ""}
+            placeholder={t("kanban.searchPlaceholder")}
+            maxLength={100}
+          />
+        </div>
+        <div className="space-y-1">
           <label htmlFor="assignee" className="text-xs">
-            Membre
+            {t("kanban.filterMember")}
           </label>
           <select
             id="assignee"
@@ -119,8 +138,8 @@ export default async function KanbanPage({
             defaultValue={q.assignee ?? ""}
             className={FIELD_CLASS}
           >
-            <option value="">Tous</option>
-            <option value="none">Non assignées</option>
+            <option value="">{t("kanban.all")}</option>
+            <option value="none">{t("kanban.unassignedPlural")}</option>
             {memberOptions.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.name}
@@ -130,7 +149,7 @@ export default async function KanbanPage({
         </div>
         <div className="space-y-1">
           <label htmlFor="status" className="text-xs">
-            Colonne
+            {t("kanban.filterColumn")}
           </label>
           <select
             id="status"
@@ -138,20 +157,20 @@ export default async function KanbanPage({
             defaultValue={q.status ?? ""}
             className={FIELD_CLASS}
           >
-            <option value="">Toutes</option>
+            <option value="">{t("kanban.allColumns")}</option>
             {TASK_STATUSES.map((s) => (
               <option key={s} value={s}>
-                {TASK_STATUS_LABELS[s]}
+                {taskStatusLabel(t, s)}
               </option>
             ))}
           </select>
         </div>
         <div className="flex items-center gap-3">
           <Button type="submit" size="sm">
-            Filtrer
+            {t("kanban.filter")}
           </Button>
           <Link href={`/projects/${id}/kanban`} className="text-sm underline">
-            Réinitialiser
+            {t("kanban.reset")}
           </Link>
         </div>
       </form>
@@ -162,17 +181,19 @@ export default async function KanbanPage({
         {visibleColumns.map((status) => (
           <section
             key={status}
-            aria-label={TASK_STATUS_LABELS[status]}
+            aria-label={taskStatusLabel(t, status)}
             className="space-y-3 rounded-lg bg-muted/40 p-3"
           >
             <h2 className="flex items-center justify-between text-sm font-semibold">
-              {TASK_STATUS_LABELS[status]}
+              {taskStatusLabel(t, status)}
               <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
                 {byStatus[status].length}
               </span>
             </h2>
             {byStatus[status].length === 0 ? (
-              <p className="text-xs text-muted-foreground">Aucune tâche.</p>
+              <p className="text-xs text-muted-foreground">
+                {t("kanban.noTasks")}
+              </p>
             ) : (
               <ul className="space-y-3">
                 {byStatus[status].map((task) => (

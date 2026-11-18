@@ -1,4 +1,4 @@
-const CACHE = "slamgement-offline-v1";
+const CACHE = "slamgement-offline-v2";
 const OFFLINE_URL = "/offline";
 
 self.addEventListener("install", (event) => {

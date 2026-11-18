@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import { maybePurge } from "@/services/maintenance.service";
 import { authConfig } from "./auth.config";
 import { normalizeIp } from "./rate-limit";
 import { loginSchema } from "./validators/auth";
@@ -26,6 +27,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const user = await verifyCredentials(email, password);
         if (!user) {
           await registerLoginFailure(email, ip);
+          maybePurge(); // ménage opportuniste des données expirées
           return null;
         }
 

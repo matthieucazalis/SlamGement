@@ -1,5 +1,7 @@
 import { formatAdrNumber } from "@/lib/adr-format";
 import type { AdrStatusValue } from "@/lib/adr-status";
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/config";
+import { createTranslator } from "@/i18n/translate";
 
 type AdrRef = { number: number; title: string };
 
@@ -47,7 +49,13 @@ function ref(r: AdrRef) {
   return `[ADR-${formatAdrNumber(r.number)}](${adrFileName(r.number, r.title)})`;
 }
 
-export function adrToMarkdown(adr: AdrExportInput) {
+// Les titres de section suivent la langue de l'utilisateur ; le statut reste en
+// anglais (proposed, accepted…) : c'est le vocabulaire standard de MADR.
+export function adrToMarkdown(
+  adr: AdrExportInput,
+  locale: Locale = DEFAULT_LOCALE,
+) {
+  const t = createTranslator(locale);
   const status =
     adr.status === "SUPERSEDED" && adr.supersededBy
       ? `superseded by ${ref(adr.supersededBy)}`
@@ -56,22 +64,26 @@ export function adrToMarkdown(adr: AdrExportInput) {
   const header = [
     `# ADR-${formatAdrNumber(adr.number)} : ${adr.title}`,
     [
-      `- Statut : ${status}`,
-      `- Date : ${adr.createdAt.toISOString().slice(0, 10)}`,
-      `- Auteur : ${adr.author.name}`,
-      ...(adr.supersedes ? [`- Remplace : ${ref(adr.supersedes)}`] : []),
+      `- ${t("adr.export.status")} : ${status}`,
+      `- ${t("adr.export.date")} : ${adr.createdAt.toISOString().slice(0, 10)}`,
+      `- ${t("adr.export.author")} : ${adr.author.name}`,
+      ...(adr.supersedes
+        ? [`- ${t("adr.export.replaces")} : ${ref(adr.supersedes)}`]
+        : []),
     ].join("\n"),
   ];
 
   const sections = [
-    `## Contexte\n\n${adr.context.trim()}`,
-    `## Décision\n\n${adr.decision.trim()}`,
-    `## Conséquences\n\n${adr.consequences.trim()}`,
+    `## ${t("adr.export.context")}\n\n${adr.context.trim()}`,
+    `## ${t("adr.export.decision")}\n\n${adr.decision.trim()}`,
+    `## ${t("adr.export.consequences")}\n\n${adr.consequences.trim()}`,
     ...(adr.alternatives
-      ? [`## Alternatives étudiées\n\n${adr.alternatives.trim()}`]
+      ? [`## ${t("adr.export.alternatives")}\n\n${adr.alternatives.trim()}`]
       : []),
     ...(adr.mermaidCode
-      ? [`## Schéma\n\n${fence("mermaid", adr.mermaidCode)}`]
+      ? [
+          `## ${t("adr.export.diagram")}\n\n${fence("mermaid", adr.mermaidCode)}`,
+        ]
       : []),
   ];
 

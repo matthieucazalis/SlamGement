@@ -1,4 +1,6 @@
+import { getLocale, getT } from "@/i18n/server";
 import { auth } from "@/lib/auth";
+import { displayName } from "@/lib/labels";
 import { parseAdrNumber } from "@/lib/adr-format";
 import { adrFileName, adrToMarkdown } from "@/lib/adr-markdown";
 import { ForbiddenError } from "@/lib/permissions";
@@ -19,7 +21,9 @@ export async function GET(
 
   try {
     const adr = await getAdr(session.user.id, id, number);
-    return new Response(adrToMarkdown(adr), {
+    const [locale, t] = await Promise.all([getLocale(), getT()]);
+    const input = { ...adr, author: { name: displayName(t, adr.author.name) } };
+    return new Response(adrToMarkdown(input, locale), {
       headers: {
         "Content-Type": "text/markdown; charset=utf-8",
         "Content-Disposition": `attachment; filename="${adrFileName(adr.number, adr.title)}"`,

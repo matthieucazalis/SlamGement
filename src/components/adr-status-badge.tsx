@@ -1,4 +1,4 @@
-import { STATUS_LABELS, type AdrStatusValue } from "@/lib/adr-status";
+import type { AdrStatusValue } from "@/lib/adr-status";
 
 const STYLES: Record<AdrStatusValue, string> = {
   PROPOSED: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200",
@@ -10,12 +10,19 @@ const STYLES: Record<AdrStatusValue, string> = {
     "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-200",
 };
 
-export function AdrStatusBadge({ status }: { status: AdrStatusValue }) {
+// Le libellé est traduit par l'appelant (composant serveur ou client)
+export function AdrStatusBadge({
+  status,
+  label,
+}: {
+  status: AdrStatusValue;
+  label: string;
+}) {
   return (
     <span
       className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${STYLES[status]}`}
     >
-      {STATUS_LABELS[status]}
+      {label}
     </span>
   );
 }

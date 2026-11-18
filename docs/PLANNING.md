@@ -40,8 +40,19 @@ gantt
 | J2 : gel des fonctionnalités | Kanban terminé, plus aucune nouvelle fonctionnalité                          | `v0.2-gel` |
 | J3 : rendu                   | Application déployée, dossier complet, démo répétée                          | `v1.0`     |
 
-## Suivi réel
+## Suivi réel (état au 17/11/2026)
 
-| Phase | Prévu  | Réel | Remarques |
-| ----- | ------ | ---- | --------- |
-| P0    | 2 sem. |      |           |
+Dates reconstituées d'après les migrations Prisma ; à confirmer par l'auteur.
+
+| Phase | Prévu  | Réel                                    | Remarques                                                                          |
+| ----- | ------ | --------------------------------------- | ---------------------------------------------------------------------------------- |
+| P0    | 2 sem. | Terminée                                | Première migration le 02/10, avant la date prévue                                  |
+| P1-P2 | 2 sem. | Terminées                               | Socle et authentification (limitation de connexion : migration du 23/10)           |
+| P3-P6 | 38 j   | Terminées                               | Projets, rôles, audit, ADR, export, Mermaid, historique, tableau de bord           |
+| P7-P8 | 14 j   | Terminées (Kanban : migration du 16/10) | Très en avance sur le planning (prévu en décembre) : ordre de réalisation modifié  |
+| P9    | 10 j   | En cours                                | Tests unitaires, intégration, e2e, CSP, responsive faits ; e2e à relancer          |
+| P10   | 10 j   | En cours                                | Dockerfile, stack de production et CI écrits ; mise en ligne à confirmer           |
+
+Travaux **ajoutés hors planning initial** : 3 langues et thème, RGPD, mot de passe oublié, API REST et OpenAPI, application mobile Expo, messagerie de projet (17/11).
+
+Le jalon J2 (gel des fonctionnalités) n'a pas été tenu au sens strict : des fonctionnalités ont été ajoutées après le Kanban. À formaliser avant le rendu : date du gel réel et tags Git `v0.1-mvp`, `v0.2-gel`, `v1.0`.

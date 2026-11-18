@@ -27,6 +27,18 @@ export async function login(page: Page, email: string, password = PASSWORD) {
   await page.getByRole("button", { name: "Se connecter" }).click();
 }
 
+// Comme login(), mais attend d'être réellement connecté (redirection vers
+// /projects). À utiliser quand la suite du test a besoin de la session : sans
+// cela, un goto() immédiat annule la connexion en cours.
+export async function loginAndWait(
+  page: Page,
+  email: string,
+  password = PASSWORD,
+) {
+  await login(page, email, password);
+  await page.waitForURL(/\/projects/);
+}
+
 export async function signUpAndLogin(page: Page, name = "Testeur") {
   const email = uniqueEmail();
   await register(page, name, email);
@@ -68,6 +80,8 @@ export async function createAdr(page: Page, projectPath: string, adr: AdrData) {
     await page.getByLabel("Schéma Mermaid").fill(adr.mermaid);
   }
   await page.getByRole("button", { name: "Créer l'ADR" }).click();
-  await page.waitForURL(/\/adr\/\d+$/);
-  return Number(page.url().match(/\/adr\/(\d+)$/)![1]);
+  // après la création, l'URL est « …/adr/1?created=1 » (le paramètre efface le
+  // brouillon local du formulaire) : on tolère la chaîne de requête
+  await page.waitForURL(/\/adr\/\d+(\?.*)?$/);
+  return Number(page.url().match(/\/adr\/(\d+)/)![1]);
 }

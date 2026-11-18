@@ -1,5 +1,7 @@
 import JSZip from "jszip";
+import { getLocale, getT } from "@/i18n/server";
 import { auth } from "@/lib/auth";
+import { displayName } from "@/lib/labels";
 import { adrFileName, adrToMarkdown, slugify } from "@/lib/adr-markdown";
 import { ForbiddenError } from "@/lib/permissions";
 import { listAdrsForExport } from "@/services/adr.service";
@@ -18,10 +20,18 @@ export async function GET(
   try {
     const { project } = await getProjectForUser(session.user.id, id);
     const adrs = await listAdrsForExport(session.user.id, id);
+    const [locale, t] = await Promise.all([getLocale(), getT()]);
 
     const zip = new JSZip();
     for (const adr of adrs) {
-      zip.file(adrFileName(adr.number, adr.title), adrToMarkdown(adr));
+      const input = {
+        ...adr,
+        author: { name: displayName(t, adr.author.name) },
+      };
+      zip.file(
+        adrFileName(adr.number, adr.title),
+        adrToMarkdown(input, locale),
+      );
     }
     const data = await zip.generateAsync({ type: "arraybuffer" });
 

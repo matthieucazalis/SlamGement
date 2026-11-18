@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { getT } from "@/i18n/server";
 import { formatAdrNumber, parseAdrNumber } from "@/lib/adr-format";
 import { isContentEditable } from "@/lib/adr-status";
 import { ForbiddenError } from "@/lib/permissions";
@@ -17,7 +18,7 @@ export default async function EditAdrPage({
   const number = parseAdrNumber(rawNumber);
   if (!number) notFound();
 
-  const user = await requireUser();
+  const [user, t] = await Promise.all([requireUser(), getT()]);
 
   let adr;
   try {
@@ -32,14 +33,14 @@ export default async function EditAdrPage({
     redirect(`/projects/${id}/adr/${number}?error=locked`);
 
   return (
-    <main className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8">
+    <main id="main-content" className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8">
       <Link
         href={`/projects/${id}/adr/${number}`}
         className="text-sm underline"
       >
         ← ADR-{formatAdrNumber(number)}
       </Link>
-      <h1 className="text-2xl font-bold">Modifier l&apos;ADR</h1>
+      <h1 className="text-2xl font-bold">{t("adr.editTitle")}</h1>
       <AdrForm
         action={updateAdrAction.bind(null, id, number)}
         initial={{
@@ -50,7 +51,7 @@ export default async function EditAdrPage({
           alternatives: adr.alternatives ?? "",
           mermaidCode: adr.mermaidCode ?? "",
         }}
-        submitLabel="Enregistrer"
+        submitLabel={t("adr.form.save")}
       />
     </main>
   );

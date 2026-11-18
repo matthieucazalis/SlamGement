@@ -5,6 +5,12 @@ export const LOGIN_LIMITS = {
   perIp: 20,
 } as const;
 
+// Demandes de réinitialisation de mot de passe : évite d'inonder une boîte mail
+export const RESET_LIMITS = {
+  perEmail: 3,
+  perIp: 10,
+} as const;
+
 export function isWindowExpired(windowStart: Date, now: Date = new Date()) {
   return now.getTime() - windowStart.getTime() >= WINDOW_MS;
 }

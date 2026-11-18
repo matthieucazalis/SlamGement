@@ -32,7 +32,8 @@ const DUMMY_HASH = bcrypt.hashSync("mot-de-passe-factice", 12);
 export async function verifyCredentials(email: string, password: string) {
   const user = await prisma.user.findUnique({ where: { email } });
   const ok = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
-  if (!user || !ok) return null;
+  // un compte anonymisé (droit à l'effacement) ne peut plus se connecter
+  if (!user || !ok || user.deletedAt) return null;
   return { id: user.id, email: user.email, name: user.name };
 }
 
@@ -41,7 +42,13 @@ export class WrongPasswordError extends Error {}
 export async function getUserById(id: string) {
   return prisma.user.findUnique({
     where: { id },
-    select: { id: true, name: true, email: true, createdAt: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      avatar: true,
+      createdAt: true,
+    },
   });
 }
 

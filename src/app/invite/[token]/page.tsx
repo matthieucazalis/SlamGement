@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { roleLabel } from "@/lib/roles";
+import { getT } from "@/i18n/server";
+import { roleLabel } from "@/lib/labels";
 import { requireUser } from "@/lib/session";
 import {
   EmailMismatchError,
@@ -21,6 +22,7 @@ export default async function InvitePage({
 }) {
   const { token } = await params;
   const { error } = await searchParams;
+  const t = await getT();
   const invitation = await getInvitationByToken(token);
   const session = await auth();
 
@@ -41,58 +43,66 @@ export default async function InvitePage({
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
+    <main
+      id="main-content"
+      className="flex min-h-screen items-center justify-center p-4"
+    >
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Invitation SlamGement</CardTitle>
+          <CardTitle>{t("invite.title")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {!invitation ? (
-            <p>Ce lien d&apos;invitation est invalide ou a expiré.</p>
+            <p>{t("invite.invalidLink")}</p>
           ) : (
             <>
               <p>
-                Tu es invité(e) à rejoindre le projet{" "}
-                <strong>{invitation.project.name}</strong> avec le rôle{" "}
-                <strong>{roleLabel(invitation.role)}</strong>.
+                {t("invite.introBefore")}{" "}
+                <strong>{invitation.project.name}</strong>{" "}
+                {t("invite.introMiddle")}{" "}
+                <strong>{roleLabel(t, invitation.role)}</strong>.
               </p>
 
               {error === "email" && (
-                <p className="text-sm text-red-600" role="alert">
-                  Cette invitation est destinée à {invitation.email}.
-                  Connecte-toi avec ce compte.
+                <p
+                  className="text-sm text-red-600 dark:text-red-400"
+                  role="alert"
+                >
+                  {t("invite.errorEmail", { email: invitation.email })}
                 </p>
               )}
               {error === "invalid" && (
-                <p className="text-sm text-red-600" role="alert">
-                  Cette invitation n&apos;est plus valable.
+                <p
+                  className="text-sm text-red-600 dark:text-red-400"
+                  role="alert"
+                >
+                  {t("invite.errorInvalid")}
                 </p>
               )}
 
               {session?.user ? (
                 <form action={accept}>
                   <Button type="submit" className="w-full">
-                    Rejoindre le projet
+                    {t("invite.join")}
                   </Button>
                 </form>
               ) : (
                 <p className="text-sm">
-                  Connecte-toi ou crée un compte avec l&apos;adresse{" "}
-                  <strong>{invitation.email}</strong> : tu reviendras ensuite
-                  sur cette invitation.
+                  {t("invite.loginBefore")} <strong>{invitation.email}</strong>
+                  {t("invite.loginAfter")}
                   <br />
                   <Link
                     href={`/login?callbackUrl=${encodeURIComponent(`/invite/${token}`)}`}
                     className="underline"
                   >
-                    Connexion
+                    {t("invite.login")}
                   </Link>
                   {" · "}
                   <Link
                     href={`/register?callbackUrl=${encodeURIComponent(`/invite/${token}`)}`}
                     className="underline"
                   >
-                    Inscription
+                    {t("invite.register")}
                   </Link>
                 </p>
               )}

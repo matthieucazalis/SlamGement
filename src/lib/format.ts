@@ -1,14 +1,24 @@
 // Le serveur tourne en UTC (conteneur Docker, Vercel…) alors que les
 // utilisateurs sont en France : sans fuseau explicite, les heures affichées
 // auraient 1 à 2 h de décalage. On fixe donc le fuseau de l'application.
+import { DEFAULT_LOCALE, LOCALE_TAGS, type Locale } from "@/i18n/config";
+
 export const APP_TIME_ZONE = "Europe/Paris";
 
-export function formatDateTime(date: Date) {
-  return date.toLocaleString("fr-FR", { timeZone: APP_TIME_ZONE });
+export function formatDateTime(date: Date, locale: Locale = DEFAULT_LOCALE) {
+  return date.toLocaleString(LOCALE_TAGS[locale], { timeZone: APP_TIME_ZONE });
 }
 
-export function formatDate(date: Date) {
-  return date.toLocaleDateString("fr-FR", { timeZone: APP_TIME_ZONE });
+export function formatDate(date: Date, locale: Locale = DEFAULT_LOCALE) {
+  return date.toLocaleDateString(LOCALE_TAGS[locale], {
+    timeZone: APP_TIME_ZONE,
+  });
+}
+
+// Une échéance est une date sans heure, stockée à minuit UTC : on l'affiche en
+// UTC, sinon elle reculerait d'un jour selon le fuseau.
+export function formatDueDate(date: Date, locale: Locale = DEFAULT_LOCALE) {
+  return date.toLocaleDateString(LOCALE_TAGS[locale], { timeZone: "UTC" });
 }
 
 // Décalage (en ms) entre l'heure murale du fuseau et UTC à un instant donné.

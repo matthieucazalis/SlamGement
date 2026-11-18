@@ -97,6 +97,12 @@ Sur le tableau de bord : 6 ADR, 6 tâches, **1 en retard**, et l'ADR 6 dans « D
 - **Dire** : aucune exécution : le HTML n'est pas interprété et les liens dangereux sont neutralisés. Test automatisé associé.
 - **Astuce** : prépare le texte dans un fichier pour le coller.
 
+### B8 bis · La messagerie (1 min, facultatif)
+
+- **Faire** : en `alice`, onglet **Messagerie**, envoyer un message ; en `bruno` (autre navigateur), le voir apparaître en moins de 10 s.
+- **Dire** : texte brut, quota anti-spam, 50 messages conservés ; les décisions durables vont dans un ADR.
+- **Préparation** : le jeu de démonstration ne contient aucun message.
+
 ### B9 · Les tests (1,5 min)
 
 - **Faire** : dans le terminal, `npm test` (quelques secondes), puis ouvrir le **rapport Playwright déjà généré**.

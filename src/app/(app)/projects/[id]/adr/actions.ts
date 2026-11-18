@@ -4,9 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { ADR_STATUSES } from "@/lib/adr-status";
+import { getT } from "@/i18n/server";
 import { ForbiddenError } from "@/lib/permissions";
 import { requireUser } from "@/lib/session";
 import { adrSchema } from "@/lib/validators/adr";
+import { firstIssueMessage } from "@/lib/validators/messages";
 import {
   AdrInUseError,
   AdrLockedError,
@@ -27,11 +29,11 @@ export async function createAdrAction(
   _prev: AdrFormState,
   formData: FormData,
 ): Promise<AdrFormState> {
-  const user = await requireUser();
+  const [user, t] = await Promise.all([requireUser(), getT()]);
   const raw = Object.fromEntries(formData) as Record<string, string>;
   const parsed = adrSchema.safeParse(raw);
   if (!parsed.success)
-    return { error: parsed.error.issues[0].message, values: raw };
+    return { error: firstIssueMessage(t, parsed.error), values: raw };
 
   let number: number;
   try {
@@ -39,10 +41,10 @@ export async function createAdrAction(
     number = adr.number;
   } catch (e) {
     if (e instanceof ForbiddenError)
-      return { error: "Accès refusé.", values: raw };
+      return { error: t("errors.forbidden"), values: raw };
     throw e;
   }
-  redirect(`/projects/${projectId}/adr/${number}`);
+  redirect(`/projects/${projectId}/adr/${number}?created=1`);
 }
 
 export async function updateAdrAction(
@@ -51,25 +53,21 @@ export async function updateAdrAction(
   _prev: AdrFormState,
   formData: FormData,
 ): Promise<AdrFormState> {
-  const user = await requireUser();
+  const [user, t] = await Promise.all([requireUser(), getT()]);
   const raw = Object.fromEntries(formData) as Record<string, string>;
   const parsed = adrSchema.safeParse(raw);
   if (!parsed.success)
-    return { error: parsed.error.issues[0].message, values: raw };
+    return { error: firstIssueMessage(t, parsed.error), values: raw };
 
   try {
     await updateAdr(user.id, projectId, number, parsed.data);
   } catch (e) {
     if (e instanceof ForbiddenError)
-      return { error: "Accès refusé.", values: raw };
+      return { error: t("errors.forbidden"), values: raw };
     if (e instanceof AdrLockedError)
-      return {
-        error:
-          "Cet ADR n'est plus modifiable (seuls les ADR proposés le sont).",
-        values: raw,
-      };
+      return { error: t("errors.adrLocked"), values: raw };
     if (e instanceof AdrNotFoundError)
-      return { error: "ADR introuvable.", values: raw };
+      return { error: t("errors.adrNotFound"), values: raw };
     throw e;
   }
   redirect(`/projects/${projectId}/adr/${number}`);

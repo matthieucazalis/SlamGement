@@ -1,3 +1,5 @@
+# Stack de production : base de données, migrations, application.
+# Démarrage : docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 services:
   db:
     image: postgres:16-alpine
@@ -13,6 +15,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    # pas de « ports » : la base n'est joignable que depuis les autres services
 
   migrate:
     build:
@@ -36,6 +39,12 @@ services:
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET manquant dans .env.prod}
       AUTH_URL: ${AUTH_URL:-http://localhost:3000}
       AUTH_TRUST_HOST: "true"
+      # e-mails (facultatif) : sans SMTP_HOST, le lien est écrit dans les journaux
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-SlamGement <no-reply@localhost>}
     depends_on:
       migrate:
         condition: service_completed_successfully

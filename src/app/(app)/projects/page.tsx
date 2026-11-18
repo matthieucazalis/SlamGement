@@ -1,40 +1,25 @@
 import Link from "next/link";
-import { signOut } from "@/lib/auth";
-import { roleLabel } from "@/lib/roles";
+import { getT } from "@/i18n/server";
+import { roleLabel } from "@/lib/labels";
 import { requireUser } from "@/lib/session";
 import { listProjectsForUser } from "@/services/project.service";
-import { Button } from "@/components/ui/button";
 import { NewProjectForm } from "./new-project-form";
 
+export async function generateMetadata() {
+  const t = await getT();
+  return { title: t("projects.title") };
+}
+
 export default async function ProjectsPage() {
-  const user = await requireUser();
+  const [user, t] = await Promise.all([requireUser(), getT()]);
   const memberships = await listProjectsForUser(user.id);
 
   return (
-    <main className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Mes projets</h1>
-        <div className="flex items-center gap-4">
-          <Link href="/profile" className="text-sm underline">
-            Mon profil
-          </Link>
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/login" });
-            }}
-          >
-            <Button type="submit" variant="outline" size="sm">
-              Se déconnecter
-            </Button>
-          </form>
-        </div>
-      </div>
+    <main id="main-content" className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8">
+      <h1 className="text-2xl font-bold">{t("projects.title")}</h1>
 
       {memberships.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Aucun projet pour l&apos;instant. Crée le premier ci-dessous.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("projects.empty")}</p>
       ) : (
         <ul className="space-y-2">
           {memberships.map(({ project, role }) => (
@@ -44,7 +29,7 @@ export default async function ProjectsPage() {
                 className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted"
               >
                 <span className="font-medium">{project.name}</span>
-                <span className="text-xs">{roleLabel(role)}</span>
+                <span className="text-xs">{roleLabel(t, role)}</span>
               </Link>
             </li>
           ))}

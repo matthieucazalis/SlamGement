@@ -144,28 +144,50 @@ qui peut changer de version majeure et casser Prisma ou Next.js.
 | Actions effectuées                  | `AuditLog`                                                | Traçabilité                      |
 | Email ou IP des échecs de connexion | `RateLimit`                                               | Limitation des tentatives        |
 | Cookie de session                   | Navigateur                                                | Maintenir la connexion           |
+| Photo de profil (facultative)       | `User.avatar` (image 256 px)                              | Personnaliser le compte          |
+| Langue, thème, retour haptique      | `User` et cookies de préférence                           | Retrouver ses réglages           |
+| Jeton de réinitialisation           | `PasswordResetToken`, **empreinte SHA-256 seulement**     | Récupérer un mot de passe oublié |
 
 - Le cookie de session est **strictement nécessaire** au fonctionnement ; il est posé par Auth.js. À vérifier dans les outils de développement (onglet Application, Cookies) : attributs `HttpOnly` et `SameSite`. L'application n'utilise aucun traceur ni service tiers (images distantes bloquées, polices et scripts servis par le site lui-même).
 - **Minimisation** : seules les données nécessaires sont collectées.
-- **Conservation** : les invitations acceptées ou expirées, les entrées d'audit et les compteurs de limitation ne sont **pas purgés** automatiquement.
-- **Droits des personnes** : l'accès et la rectification existent via la page de profil. **L'effacement et la portabilité ne sont pas implémentés.**
+- **Conservation** : les compteurs de connexion (15 min), jetons de réinitialisation (1 h, supprimés après 1 jour) et invitations (7 jours, supprimées après 30 jours) sont **purgés automatiquement** (`maintenance.service.ts`, déclenché de façon opportuniste). Les entrées d'audit sont conservées tant que le projet existe.
+- **Droits des personnes** (page Profil) : **accès et portabilité** par l'export JSON de toutes les données du compte (`/profile/export`, jamais le mot de passe) ; **rectification** du nom ; **effacement** par la suppression du compte, qui anonymise la ligne `User` (nom, email, photo, préférences effacés, connexion impossible) tout en gardant la cohérence des décisions et de l'historique des projets partagés (affichés sous « Utilisateur supprimé »). Un administrateur ne peut pas supprimer son compte s'il est le dernier administrateur d'un projet qui compte d'autres membres ; un projet dont on est le seul membre est supprimé.
+- **Information** : pages `/legal/privacy` et `/legal/notice` (à compléter avec tes coordonnées : les passages entre crochets).
+- **Cookies** : uniquement ceux strictement nécessaires (session, langue, thème, retour haptique) : aucun consentement requis.
+
+### Mesures ajoutées avec les nouvelles fonctionnalités
+
+| Risque                                                 | Mesure                                                                                                                                                          | Preuve                                  |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| Fuite de la base → prise de contrôle de comptes        | Jeton de réinitialisation stocké **haché** (SHA-256), 256 bits aléatoires, 1 h, **usage unique** (même sous concurrence)                                        | `tests/integration/auth.test.ts`        |
+| Énumération des comptes par « mot de passe oublié »    | Réponse identique que le compte existe ou non ; les demandes pour adresses inconnues comptent dans la limite                                                    | `auth.test.ts` (« pas de fuite »)       |
+| Inondation d'une boîte mail                            | Limite : 3 demandes / adresse et 10 / IP par 15 minutes                                                                                                         | `auth.test.ts`                          |
+| Empoisonnement du lien (en-tête Host forgé)            | Le lien est construit avec `AUTH_URL`, jamais avec l'en-tête Host en production                                                                                 | `lib/base-url.ts`                       |
+| Image piégée envoyée comme photo (SVG, HTML, faux PNG) | Liste blanche JPEG/PNG/WebP, vérification de la **signature binaire**, taille maximale, image ré-encodée côté client                                            | `lib/avatar.test.ts`                    |
+| Vol du jeton de l'application mobile                   | Jeton stocké **haché**, 30 jours, révocable à la déconnexion ; sur le téléphone, dans le **coffre du système** (Keychain / Keystore) et non dans `AsyncStorage` | `api.test.ts`, `mobile/README.md`       |
+| Écriture forgée depuis un site tiers (CSRF) sur l'API  | Les écritures exigent un jeton ; un cookie de session ne permet que de lire (`403 token_required`)                                                              | test HTTP, `docs/API.md`                |
+| Fuite de données par l'API                             | Réponses construites champ par champ ; 404 (et non 403) pour un projet d'autrui                                                                                 | `api-serializers.ts`, `e2e/api.spec.ts` |
+| Redirection ouverte après connexion                    | `callbackUrl` réduit à un chemin interne                                                                                                                        | `lib/safe-redirect.test.ts`             |
+| Abus de la messagerie (spam, injection) | Texte brut dans `whitespace-pre-wrap` (jamais interprété) ; 2000 caractères ; 15 messages/min et 80 par fenêtre et par utilisateur (`consumeQuota`, SQL atomique) ; 50 messages conservés ; droits de membre vérifiés | `message.service.ts` (tests à écrire, voir `TESTS.md`) |
+| Compte supprimé encore utilisable                      | Compte vérifié en base à chaque requête (`requireUser`, API) ; connexion impossible (empreinte invalide)                                                        | `account.test.ts`, test HTTP manuel     |
 
 ## 7. Limites connues et améliorations
 
 | Limite                                                      | Conséquence                                                                                                                 | Amélioration possible                                  |
 | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | Sessions JWT non révocables avant 8 h                       | Un compte compromis reste actif jusqu'à l'expiration                                                                        | Sessions en base ou liste de révocation                |
-| **Pas de réinitialisation de mot de passe**                 | Un mot de passe oublié bloque le compte                                                                                     | Jeton envoyé par email                                 |
+| Réinitialisation de mot de passe : e-mail non authentifié   | Le lien part vers l'adresse saisie à l'inscription, non vérifiée                                                            | Vérification de l'email à l'inscription                |
 | **Email non vérifié** à l'inscription                       | Un compte peut porter une adresse qui n'est pas la sienne ; la sécurité d'une invitation repose alors sur le secret du lien | Confirmation par email                                 |
 | Pas d'authentification à deux facteurs                      | Mot de passe seul                                                                                                           | TOTP                                                   |
 | Politique de mot de passe minimale (longueur)               | Mots de passe faibles possibles                                                                                             | Liste de mots de passe courants                        |
 | Limitation par email exploitable                            | Quelqu'un peut bloquer le compte d'un autre 15 minutes                                                                      | Délais croissants, ou limitation par couple email + IP |
-| Table `RateLimit` jamais purgée                             | Croissance, et conservation d'adresses                                                                                      | Tâche de purge                                         |
+| Purge déclenchée par l'activité (pas planifiée)             | Sur un site sans aucun trafic, les données expirées restent jusqu'à la prochaine connexion                                  | Tâche planifiée (cron)                                 |
 | CSP avec `'unsafe-inline'`                                  | Protection contre le XSS moins stricte                                                                                      | CSP à nonce                                            |
-| Pas de suppression de compte                                | Droit à l'effacement non couvert                                                                                            | Suppression avec anonymisation des entrées d'audit     |
+| Sessions d'un compte supprimé sur un autre appareil         | Refusées dès la requête suivante (vérification en base), mais le jeton reste techniquement valide jusqu'à expiration        | Sessions en base                                       |
 | Règle du dernier administrateur non testée sous concurrence | Deux rétrogradations simultanées pourraient théoriquement passer                                                            | Niveau d'isolation `Serializable`                      |
 | Modification simultanée d'une tâche                         | La dernière écriture l'emporte                                                                                              | Contrôle de version                                    |
 | Alertes de dépendances acceptées (CLI `shadcn`, Prisma CLI) | Risque limité aux outils de développement                                                                                   | Suivi des mises à jour                                 |
+| Messagerie : actions non journalisées, messages ni modifiables ni supprimables | Pas de modération par un administrateur | Suppression par un administrateur, trace d'audit |
 | Pas de confirmation avant « Retirer » un membre             | Action immédiate                                                                                                            | Boîte de dialogue de confirmation                      |
 
 Points à confirmer dans la documentation de ta version de Next.js : la vérification de l'en-tête

@@ -1,8 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
-import { AUDIT_ACTION_LABELS, describeAudit } from "@/lib/audit-labels";
+import { getLocale, getT } from "@/i18n/server";
+import {
+  AUDIT_ACTIONS_LIST,
+  auditActionLabel,
+  describeAudit,
+} from "@/lib/audit-labels";
 import { formatDateTime, startOfDayInAppZone } from "@/lib/format";
+import { displayName } from "@/lib/labels";
 import { ForbiddenError } from "@/lib/permissions";
 import { requireUser } from "@/lib/session";
 import { listAuditActors, listAuditLogs } from "@/services/audit.service";
@@ -17,10 +23,7 @@ const dateField = z
 
 const querySchema = z.object({
   user: z.string().max(40).optional().catch(undefined),
-  action: z
-    .enum(Object.keys(AUDIT_ACTION_LABELS) as [string, ...string[]])
-    .optional()
-    .catch(undefined),
+  action: z.enum(AUDIT_ACTIONS_LIST).optional().catch(undefined),
   from: dateField,
   to: dateField,
   page: z.coerce.number().int().min(1).max(10000).catch(1),
@@ -37,7 +40,11 @@ export default async function HistoryPage({
 }) {
   const { id } = await params;
   const q = querySchema.parse(await searchParams);
-  const user = await requireUser();
+  const [user, t, locale] = await Promise.all([
+    requireUser(),
+    getT(),
+    getLocale(),
+  ]);
 
   let project;
   let result;
@@ -68,11 +75,11 @@ export default async function HistoryPage({
   };
 
   return (
-    <main className="mx-auto max-w-4xl space-y-6 p-4 sm:p-8">
+    <main id="main-content" className="mx-auto max-w-4xl space-y-6 p-4 sm:p-8">
       <Link href={`/projects/${id}`} className="text-sm underline">
         ← {project.name}
       </Link>
-      <h1 className="text-2xl font-bold">Historique des actions</h1>
+      <h1 className="text-2xl font-bold">{t("history.title")}</h1>
 
       <form
         method="get"
@@ -80,7 +87,7 @@ export default async function HistoryPage({
       >
         <div className="space-y-1">
           <label htmlFor="user" className="text-xs">
-            Utilisateur
+            {t("history.user")}
           </label>
           <select
             id="user"
@@ -88,17 +95,17 @@ export default async function HistoryPage({
             defaultValue={q.user ?? ""}
             className={FIELD_CLASS}
           >
-            <option value="">Tous</option>
+            <option value="">{t("history.all")}</option>
             {actors.map((a) => (
               <option key={a.id} value={a.id}>
-                {a.name}
+                {displayName(t, a.name)}
               </option>
             ))}
           </select>
         </div>
         <div className="space-y-1">
           <label htmlFor="action" className="text-xs">
-            Action
+            {t("history.action")}
           </label>
           <select
             id="action"
@@ -106,17 +113,17 @@ export default async function HistoryPage({
             defaultValue={q.action ?? ""}
             className={FIELD_CLASS}
           >
-            <option value="">Toutes</option>
-            {Object.entries(AUDIT_ACTION_LABELS).map(([value, label]) => (
+            <option value="">{t("history.allActions")}</option>
+            {AUDIT_ACTIONS_LIST.map((value) => (
               <option key={value} value={value}>
-                {label}
+                {auditActionLabel(t, value)}
               </option>
             ))}
           </select>
         </div>
         <div className="space-y-1">
           <label htmlFor="from" className="text-xs">
-            Du
+            {t("history.from")}
           </label>
           <input
             id="from"
@@ -128,7 +135,7 @@ export default async function HistoryPage({
         </div>
         <div className="space-y-1">
           <label htmlFor="to" className="text-xs">
-            Au
+            {t("history.to")}
           </label>
           <input
             id="to"
@@ -140,43 +147,41 @@ export default async function HistoryPage({
         </div>
         <div className="flex items-center gap-3">
           <Button type="submit" size="sm">
-            Filtrer
+            {t("history.filter")}
           </Button>
           <Link href={`/projects/${id}/history`} className="text-sm underline">
-            Réinitialiser
+            {t("history.reset")}
           </Link>
         </div>
       </form>
 
       <p className="text-sm text-muted-foreground">
-        {result.total} action{result.total > 1 ? "s" : ""}
+        {t("history.count", { count: result.total })}
       </p>
 
       {result.items.length === 0 ? (
-        <p className="text-sm">Aucune action ne correspond à ces filtres.</p>
+        <p className="text-sm">{t("history.noMatch")}</p>
       ) : (
         <div className="overflow-x-auto rounded-lg border">
           <table className="w-full text-sm">
             <thead className="border-b bg-muted/50 text-left">
               <tr>
-                <th className="p-3">Date</th>
-                <th className="p-3">Utilisateur</th>
-                <th className="p-3">Action</th>
-                <th className="p-3">Détail</th>
+                <th className="p-3">{t("history.colDate")}</th>
+                <th className="p-3">{t("history.colUser")}</th>
+                <th className="p-3">{t("history.colAction")}</th>
+                <th className="p-3">{t("history.colDetail")}</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {result.items.map((log) => (
                 <tr key={log.id}>
                   <td className="whitespace-nowrap p-3">
-                    {formatDateTime(log.createdAt)}
+                    {formatDateTime(log.createdAt, locale)}
                   </td>
-                  <td className="p-3">{log.user.name}</td>
+                  <td className="p-3">{displayName(t, log.user.name)}</td>
+                  <td className="p-3">{auditActionLabel(t, log.action)}</td>
                   <td className="p-3">
-                    {AUDIT_ACTION_LABELS[log.action] ?? log.action}
-                  </td>
-                  <td className="p-3">
-                    {describeAudit(log.action, log.metadata)}
+                    {describeAudit(t, log.action, log.metadata)}
                   </td>
                 </tr>
               ))}
@@ -188,21 +193,24 @@ export default async function HistoryPage({
       {result.pageCount > 1 && (
         <nav
           className="flex items-center justify-between text-sm"
-          aria-label="Pagination"
+          aria-label={t("history.pagination")}
         >
           {result.page > 1 ? (
             <Link href={pageHref(result.page - 1)} className="underline">
-              ← Précédent
+              {t("history.previous")}
             </Link>
           ) : (
             <span />
           )}
           <span>
-            Page {result.page} / {result.pageCount}
+            {t("history.page", {
+              page: result.page,
+              pageCount: result.pageCount,
+            })}
           </span>
           {result.page < result.pageCount ? (
             <Link href={pageHref(result.page + 1)} className="underline">
-              Suivant →
+              {t("history.next")}
             </Link>
           ) : (
             <span />

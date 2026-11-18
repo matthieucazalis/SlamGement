@@ -18,6 +18,7 @@ test.describe("authentification", () => {
     await page.getByRole("button", { name: "Se déconnecter" }).click();
     await expect(page).toHaveURL(/\/login/);
 
+    // la session est bien terminée
     await page.goto("/projects");
     await expect(page).toHaveURL(/\/login/);
   });

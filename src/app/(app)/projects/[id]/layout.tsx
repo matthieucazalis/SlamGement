@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getT } from "@/i18n/server";
+import { roleLabel } from "@/lib/labels";
 import { ForbiddenError } from "@/lib/permissions";
-import { roleLabel } from "@/lib/roles";
 import { requireUser } from "@/lib/session";
 import { getProjectForUser } from "@/services/project.service";
 import { ProjectNav } from "./project-nav";
@@ -14,7 +15,7 @@ export default async function ProjectLayout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const user = await requireUser();
+  const [user, t] = await Promise.all([requireUser(), getT()]);
 
   let data;
   try {
@@ -26,19 +27,19 @@ export default async function ProjectLayout({
 
   return (
     <div>
-      <header className="border-b">
+      <div className="border-b">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-8">
           <div className="flex min-w-0 items-center gap-2">
             <Link href="/projects" className="shrink-0 text-sm underline">
-              Mes projets
+              {t("nav.projects")}
             </Link>
             <span aria-hidden="true">/</span>
             <span className="truncate font-semibold">{data.project.name}</span>
           </div>
-          <span className="shrink-0 text-xs">{roleLabel(data.role)}</span>
+          <span className="shrink-0 text-xs">{roleLabel(t, data.role)}</span>
         </div>
         <ProjectNav projectId={id} isAdmin={data.role === "ADMIN"} />
-      </header>
+      </div>
       {children}
     </div>
   );

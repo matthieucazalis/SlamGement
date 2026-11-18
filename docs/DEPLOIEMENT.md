@@ -14,7 +14,11 @@ Renseigner dans `.env.prod` :
 
 - `POSTGRES_PASSWORD` : `openssl rand -hex 16` (hexadécimal : il est inséré dans une URL)
 - `AUTH_SECRET` : `openssl rand -base64 32`
-- `AUTH_URL` : l'adresse publique du site
+- `AUTH_URL` : l'adresse publique du site. **Obligatoire en production** : elle sert à construire les liens
+  envoyés par e-mail (le serveur n'utilise jamais l'en-tête `Host` fourni par le visiteur).
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` : envoi des e-mails (mot de passe oublié).
+  **Facultatif** : sans `SMTP_HOST`, le lien de réinitialisation est écrit dans les journaux
+  (`docker compose -f docker-compose.prod.yml logs app`), ce qui suffit pour une démonstration.
 
 `.env.prod` n'est jamais versionné.
 
@@ -64,3 +68,9 @@ dans le volume `pgdata`, conservé entre les mises à jour.
 docker compose -f docker-compose.prod.yml --env-file .env.prod exec db \
   pg_dump -U slamgement slamgement > sauvegarde.sql
 ```
+
+## Application mobile
+
+Le serveur déployé sert aussi l'API de l'application mobile (`/api/v1`). Pour un **`.apk` installé** (hors Expo Go), le site
+doit être en **HTTPS** : Android refuse le trafic `http://` non chiffré. Voir `mobile/README.md` (section « Installer l'application
+sans Expo Go »).

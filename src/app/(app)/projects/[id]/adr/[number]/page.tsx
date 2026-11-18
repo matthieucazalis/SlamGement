@@ -1,42 +1,26 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdrStatusBadge } from "@/components/adr-status-badge";
+import { ClearDraft } from "@/components/clear-draft";
 import { Markdown } from "@/components/markdown";
 import { MermaidDiagram } from "@/components/mermaid-diagram";
+import { getLocale, getT } from "@/i18n/server";
 import { formatAdrNumber, parseAdrNumber } from "@/lib/adr-format";
-import {
-  allowedTransitions,
-  isContentEditable,
-  type AdrStatusValue,
-} from "@/lib/adr-status";
+import { allowedTransitions, isContentEditable } from "@/lib/adr-status";
 import { formatDate } from "@/lib/format";
+import {
+  adrActionLabel,
+  adrStatusLabel,
+  displayName,
+  taskStatusLabel,
+} from "@/lib/labels";
 import { ForbiddenError, requireRole } from "@/lib/permissions";
 import { requireUser } from "@/lib/session";
-import { TASK_STATUS_LABELS } from "@/lib/task-status";
 import { AdrNotFoundError, getAdr } from "@/services/adr.service";
 import { listTasksByAdr } from "@/services/task.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { changeStatusAction, deleteAdrAction } from "../actions";
-
-const ACTION_LABELS: Record<AdrStatusValue, string> = {
-  PROPOSED: "Remettre en proposition",
-  ACCEPTED: "Accepter",
-  REJECTED: "Rejeter",
-  DEPRECATED: "Déprécier",
-  SUPERSEDED: "Marquer comme remplacé",
-};
-
-const ERRORS: Record<string, string> = {
-  transition: "Ce changement de statut n'est pas autorisé.",
-  supersession:
-    "Remplacement invalide : choisis le numéro d'un autre ADR existant (proposé ou accepté) qui ne remplace pas déjà une autre décision.",
-  forbidden: "Action non autorisée.",
-  invalid: "Données invalides.",
-  locked: "Cet ADR n'est plus modifiable.",
-  "in-use":
-    "Impossible : cet ADR en remplace un autre. Supprime ou modifie d'abord la chaîne de remplacement.",
-};
 
 function Section({ title, text }: { title: string; text: string }) {
   return (
@@ -52,14 +36,18 @@ export default async function AdrDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string; number: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; created?: string }>;
 }) {
   const { id, number: rawNumber } = await params;
-  const { error } = await searchParams;
+  const { error, created } = await searchParams;
   const number = parseAdrNumber(rawNumber);
   if (!number) notFound();
 
-  const user = await requireUser();
+  const [user, t, locale] = await Promise.all([
+    requireUser(),
+    getT(),
+    getLocale(),
+  ]);
 
   let adr;
   let membership;
@@ -75,26 +63,49 @@ export default async function AdrDetailPage({
   }
 
   const transitions = allowedTransitions(adr.status);
+  const errorMessage =
+    error === "transition"
+      ? t("adr.errorTransition")
+      : error === "supersession"
+        ? t("adr.errorSupersession")
+        : error === "forbidden"
+          ? t("adr.errorForbidden")
+          : error === "invalid"
+            ? t("adr.errorInvalid")
+            : error === "locked"
+              ? t("adr.errorLocked")
+              : error === "in-use"
+                ? t("adr.errorInUse")
+                : null;
 
   return (
-    <main className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8">
+    <main id="main-content" className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8">
+      {created === "1" && (
+        <ClearDraft storageKey={`slamgement:adr-draft:${id}`} />
+      )}
       <Link href={`/projects/${id}/adr`} className="text-sm underline">
-        ← Les ADR
+        {t("adr.backToList")}
       </Link>
 
       <header className="space-y-2">
         <h1 className="text-2xl font-bold">
           ADR-{formatAdrNumber(adr.number)} : {adr.title}
         </h1>
-        <div className="flex items-center gap-3 text-sm">
-          <AdrStatusBadge status={adr.status} />
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          <AdrStatusBadge
+            status={adr.status}
+            label={adrStatusLabel(t, adr.status)}
+          />
           <span>
-            Par {adr.author.name} · {formatDate(adr.createdAt)}
+            {t("adr.by", {
+              author: displayName(t, adr.author.name),
+              date: formatDate(adr.createdAt, locale),
+            })}
           </span>
         </div>
         {adr.supersededBy && (
           <p className="text-sm">
-            Remplacé par{" "}
+            {t("adr.supersededBy")}{" "}
             <Link
               href={`/projects/${id}/adr/${adr.supersededBy.number}`}
               className="underline"
@@ -106,7 +117,7 @@ export default async function AdrDetailPage({
         )}
         {adr.supersedes && (
           <p className="text-sm">
-            Remplace{" "}
+            {t("adr.supersedes")}{" "}
             <Link
               href={`/projects/${id}/adr/${adr.supersedes.number}`}
               className="underline"
@@ -118,12 +129,12 @@ export default async function AdrDetailPage({
         )}
       </header>
 
-      {error && ERRORS[error] && (
+      {errorMessage && (
         <p
-          className="rounded-md border border-red-300 p-3 text-sm text-red-600"
+          className="rounded-md border border-red-300 p-3 text-sm text-red-600 dark:border-red-800 dark:text-red-400"
           role="alert"
         >
-          {ERRORS[error]}
+          {errorMessage}
         </p>
       )}
 
@@ -138,8 +149,13 @@ export default async function AdrDetailPage({
               action={changeStatusAction.bind(null, id, adr.number)}
             >
               <input type="hidden" name="newStatus" value={s} />
-              <Button type="submit" variant="outline" size="sm">
-                {ACTION_LABELS[s]}
+              <Button
+                type="submit"
+                variant="outline"
+                size="sm"
+                data-haptic="light"
+              >
+                {adrActionLabel(t, s)}
               </Button>
             </form>
           ))}
@@ -152,7 +168,7 @@ export default async function AdrDetailPage({
             <input type="hidden" name="newStatus" value="SUPERSEDED" />
             <div>
               <label htmlFor="replacement" className="text-xs">
-                Remplacé par l&apos;ADR n°
+                {t("adr.replacedByNumber")}
               </label>
               <Input
                 id="replacement"
@@ -163,8 +179,13 @@ export default async function AdrDetailPage({
                 className="h-8 w-24"
               />
             </div>
-            <Button type="submit" variant="outline" size="sm">
-              {ACTION_LABELS.SUPERSEDED}
+            <Button
+              type="submit"
+              variant="outline"
+              size="sm"
+              data-haptic="light"
+            >
+              {adrActionLabel(t, "SUPERSEDED")}
             </Button>
           </form>
         )}
@@ -174,7 +195,7 @@ export default async function AdrDetailPage({
             href={`/projects/${id}/adr/${adr.number}/edit`}
             className="rounded-md border px-3 py-1.5 text-sm"
           >
-            Modifier
+            {t("adr.edit")}
           </Link>
         )}
 
@@ -182,23 +203,23 @@ export default async function AdrDetailPage({
           href={`/projects/${id}/adr/${adr.number}/export`}
           className="rounded-md border px-3 py-1.5 text-sm"
         >
-          Exporter .md
+          {t("adr.exportMd")}
         </a>
       </div>
 
-      <Section title="Contexte" text={adr.context} />
-      <Section title="Décision" text={adr.decision} />
-      <Section title="Conséquences" text={adr.consequences} />
+      <Section title={t("adr.sectionContext")} text={adr.context} />
+      <Section title={t("adr.sectionDecision")} text={adr.decision} />
+      <Section title={t("adr.sectionConsequences")} text={adr.consequences} />
       {adr.alternatives && (
-        <Section title="Alternatives" text={adr.alternatives} />
+        <Section title={t("adr.sectionAlternatives")} text={adr.alternatives} />
       )}
 
       {adr.mermaidCode && (
         <section className="space-y-2">
-          <h2 className="text-lg font-semibold">Schéma</h2>
+          <h2 className="text-lg font-semibold">{t("adr.sectionDiagram")}</h2>
           <MermaidDiagram code={adr.mermaidCode} />
           <details className="text-sm">
-            <summary className="cursor-pointer">Voir le code Mermaid</summary>
+            <summary className="cursor-pointer">{t("adr.viewMermaid")}</summary>
             <pre className="mt-2 overflow-x-auto rounded-md border p-3">
               {adr.mermaidCode}
             </pre>
@@ -207,27 +228,29 @@ export default async function AdrDetailPage({
       )}
 
       <section className="space-y-2">
-        <h2 className="text-lg font-semibold">Tâches liées</h2>
+        <h2 className="text-lg font-semibold">{t("adr.linkedTasks")}</h2>
         {tasks.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Aucune tâche liée. Associe une tâche à cet ADR depuis le Kanban.
+            {t("adr.noLinkedTasks")}
           </p>
         ) : (
           <ul className="divide-y rounded-lg border">
-            {tasks.map((t) => (
+            {tasks.map((task) => (
               <li
-                key={t.id}
+                key={task.id}
                 className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm"
               >
                 <Link
-                  href={`/projects/${id}/kanban/${t.id}`}
+                  href={`/projects/${id}/kanban/${task.id}`}
                   className="underline"
                 >
-                  {t.title}
+                  {task.title}
                 </Link>
                 <span className="text-xs text-muted-foreground">
-                  {TASK_STATUS_LABELS[t.status]} ·{" "}
-                  {t.assignee?.name ?? "Non assignée"}
+                  {taskStatusLabel(t, task.status)} ·{" "}
+                  {task.assignee
+                    ? displayName(t, task.assignee.name)
+                    : t("adr.unassigned")}
                 </span>
               </li>
             ))}
@@ -236,18 +259,25 @@ export default async function AdrDetailPage({
       </section>
 
       {membership.role === "ADMIN" && (
-        <section className="space-y-3 rounded-lg border border-red-300 p-4">
-          <h2 className="font-semibold text-red-600">Zone dangereuse</h2>
+        <section className="space-y-3 rounded-lg border border-red-300 p-4 dark:border-red-800">
+          <h2 className="font-semibold text-red-600 dark:text-red-400">
+            {t("adr.dangerTitle")}
+          </h2>
           <form
             action={deleteAdrAction.bind(null, id, adr.number)}
             className="space-y-3"
           >
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" name="confirm" required />
-              Je confirme vouloir supprimer définitivement cet ADR
+              {t("adr.confirmDelete")}
             </label>
-            <Button type="submit" variant="destructive" size="sm">
-              Supprimer l&apos;ADR
+            <Button
+              type="submit"
+              variant="destructive"
+              size="sm"
+              data-haptic="error"
+            >
+              {t("adr.deleteButton")}
             </Button>
           </form>
         </section>
